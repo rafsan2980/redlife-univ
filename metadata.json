@@ -1,0 +1,6 @@
+{
+  "name": "University Blood Donation Network",
+  "description": "A modern, responsive blood donation management system for university students, donors, and administrators, styled with an elegant red and white theme.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,423 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Custom CSS Variables - :root defines Light Mode by default */
+:root {
+  --bg-body: #F4F6FB;
+  --bg-card: #FFFFFF;
+  --bg-card-secondary: #F8FAFC;
+  --text-main: #0B132B;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --border-color: #E2E8F0;
+  --border-color-hover: rgba(255, 30, 30, 0.25);
+  --shadow-card: 0 4px 18px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  --header-bg: rgba(255, 255, 255, 0.85);
+  --header-border: #E2E8F0;
+  --footer-bg: #FFFFFF;
+  --footer-border: #E2E8F0;
+  --input-bg: #FFFFFF;
+  --input-border: #D1D5DB;
+  --input-text: #0B132B;
+}
+
+/* Premium Dark Mode Styles */
+.premium-dark {
+  --bg-body: #050816;
+  --bg-card: #0B1220;
+  --bg-card-secondary: #111827;
+  --text-main: #FFFFFF;
+  --text-secondary: #D1D5DB;
+  --text-muted: #94A3B8;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-hover: rgba(255, 30, 30, 0.45);
+  --shadow-card: 0 10px 40px -10px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 30, 30, 0.12);
+  --header-bg: rgba(2, 2, 5, 0.8);
+  --header-border: rgba(255, 30, 30, 0.28);
+  --footer-bg: rgba(2, 2, 5, 0.8);
+  --footer-border: rgba(255, 30, 30, 0.24);
+  --input-bg: rgba(0, 0, 0, 0.5);
+  --input-border: rgba(255, 30, 30, 0.25);
+  --input-text: #FFFFFF;
+}
+
+/* Custom styling for blood elements and animations */
+@layer base {
+  body {
+    background-color: var(--bg-body) !important;
+    color: var(--text-main) !important;
+    font-family: var(--font-sans);
+    transition: background-color 450ms cubic-bezier(0.4, 0, 0.2, 1), color 450ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Global Transition Utility */
+body, header, main, footer, div, section, button, input, select, textarea, span, p, h1, h2, h3, h4, h5, h6 {
+  transition: background-color 300ms cubic-bezier(0.4, 0, 0.2, 1), border-color 300ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1), color 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Header style bound to theme variables */
+header {
+  background-color: var(--header-bg) !important;
+  border-bottom-color: var(--header-border) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+.premium-dark header {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 30, 30, 0.15) !important;
+}
+
+/* Footer style bound to theme variables */
+footer {
+  background-color: var(--footer-bg) !important;
+  border-top-color: var(--footer-border) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+/* Premium Dark overrides */
+.premium-dark body,
+.premium-dark #app_root {
+  background: radial-gradient(circle at 50% 250px, #1a0404 0%, #020205 100%) !important;
+}
+
+/* Card classes mapping */
+.rounded-2xl,
+.rounded-3xl {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.premium-dark .rounded-2xl,
+.premium-dark .rounded-3xl {
+  background-color: rgba(6, 9, 21, 0.6) !important;
+  backdrop-filter: blur(24px) !important;
+}
+
+/* Hover effect on cards */
+.premium-dark .rounded-2xl:hover {
+  border-color: var(--border-color-hover) !important;
+  box-shadow: 0 15px 45px -5px rgba(255, 30, 30, 0.22), inset 0 0 10px rgba(255, 30, 30, 0.1) !important;
+}
+
+/* Glowing/Sleek Inputs mapped to theme variables */
+input,
+select,
+textarea {
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--input-text) !important;
+}
+
+.premium-dark input,
+.premium-dark select,
+.premium-dark textarea {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #FF1E1E !important;
+}
+
+.premium-dark input:focus,
+.premium-dark select:focus,
+.premium-dark textarea:focus {
+  border-color: rgba(255, 30, 30, 0.6) !important;
+  box-shadow: 0 0 14px rgba(255, 30, 30, 0.45), inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Red button custom shadows in dark mode */
+.premium-dark .bg-\[\#FF1E1E\] {
+  box-shadow: 0 0 22px rgba(255, 30, 30, 0.6) !important;
+}
+
+.premium-dark .bg-\[\#FF1E1E\]:hover {
+  box-shadow: 0 0 35px rgba(255, 30, 30, 0.85) !important;
+}
+
+/* LIGHT MODE EXPLICIT MAPPINGS (restores original white/medical theme beautifully) */
+:root:not(.premium-dark):not(.dark) {
+  --tw-bg-opacity: 1;
+}
+
+:root:not(.premium-dark):not(.dark) body {
+  background-color: #F4F6FB !important;
+  color: #0B132B !important;
+}
+
+:root:not(.premium-dark):not(.dark) #app_root {
+  background-color: #F4F6FB !important;
+  background-image: none !important;
+}
+
+:root:not(.premium-dark):not(.dark) .bg-\[\#050816\],
+:root:not(.premium-dark):not(.dark) .bg-\[\#050816\]\/80,
+:root:not(.premium-dark):not(.dark) .bg-\[\#050816\]\/85 {
+  background-color: #F4F6FB !important;
+}
+
+:root:not(.premium-dark):not(.dark) .bg-\[\#0B1220\],
+:root:not(.premium-dark):not(.dark) .bg-\[\#0B1220\]\/80,
+:root:not(.premium-dark):not(.dark) .bg-\[\#0B1220\]\/40 {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+:root:not(.premium-dark):not(.dark) .bg-\[\#111827\] {
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* Exclude background gradient inside cards in Light mode, replace with flat premium colors */
+:root:not(.premium-dark):not(.dark) .bg-gradient-to-r {
+  background-image: none !important;
+  background-color: #FFFFFF !important;
+}
+
+/* Overwrite background gradients on sections to keep it clean */
+:root:not(.premium-dark):not(.dark) .bg-gradient-to-b {
+  background-image: none !important;
+  background-color: #F4F6FB !important;
+}
+
+/* Map default glass overlays to soft white in light mode */
+:root:not(.premium-dark):not(.dark) .bg-white\/5 {
+  background-color: #E2E8F0 !important;
+  border-color: #CBD5E1 !important;
+}
+
+:root:not(.premium-dark):not(.dark) .bg-white\/10 {
+  background-color: #E2E8F0 !important;
+  border-color: #CBD5E1 !important;
+}
+
+:root:not(.premium-dark):not(.dark) .bg-white\/8 {
+  background-color: #F1F5F9 !important;
+}
+
+/* Hover effects for buttons */
+:root:not(.premium-dark):not(.dark) .hover\:bg-white\/5:hover {
+  background-color: #E2E8F0 !important;
+}
+
+:root:not(.premium-dark):not(.dark) .hover\:text-white:hover {
+  color: #0F172A !important;
+}
+
+/* Border overrides */
+:root:not(.premium-dark):not(.dark) .border-white\/5,
+:root:not(.premium-dark):not(.dark) .border-white\/8,
+:root:not(.premium-dark):not(.dark) .border-white\/10 {
+  border-color: #E2E8F0 !important;
+}
+
+/* Light Mode Global Text Rules */
+:root:not(.premium-dark):not(.dark) .text-white,
+:root:not(.premium-dark):not(.dark) .text-\[\#FFFFFF\] {
+  color: #0B132B !important;
+}
+
+:root:not(.premium-dark):not(.dark) .text-gray-400 {
+  color: #64748B !important;
+}
+
+:root:not(.premium-dark):not(.dark) .text-gray-300 {
+  color: #334155 !important;
+}
+
+:root:not(.premium-dark):not(.dark) .text-gray-200 {
+  color: #1E293B !important;
+}
+
+:root:not(.premium-dark):not(.dark) .text-rose-100 {
+  color: #0B132B !important;
+}
+
+/* Exceptions: Items with dark BG must stay text white, including red elements, greens, and ambers */
+:root:not(.premium-dark):not(.dark) .bg-\[\#FF1E1E\],
+:root:not(.premium-dark):not(.dark) .bg-\[\#FF1E1E\] *,
+:root:not(.premium-dark):not(.dark) .bg-red-650,
+:root:not(.premium-dark):not(.dark) .bg-red-600,
+:root:not(.premium-dark):not(.dark) .bg-red-600 *,
+:root:not(.premium-dark):not(.dark) .bg-red-500,
+:root:not(.premium-dark):not(.dark) .bg-red-500 *,
+:root:not(.premium-dark):not(.dark) .bg-emerald-500,
+:root:not(.premium-dark):not(.dark) .bg-emerald-555,
+:root:not(.premium-dark):not(.dark) .bg-emerald-500 *,
+:root:not(.premium-dark):not(.dark) .bg-emerald-600,
+:root:not(.premium-dark):not(.dark) .bg-emerald-600 *,
+:root:not(.premium-dark):not(.dark) .bg-amber-500,
+:root:not(.premium-dark):not(.dark) .bg-amber-500 *,
+:root:not(.premium-dark):not(.dark) .bg-amber-600,
+:root:not(.premium-dark):not(.dark) .bg-amber-600 *,
+:root:not(.premium-dark):not(.dark) .bg-[#050816],
+:root:not(.premium-dark):not(.dark) .bg-[#050816] *,
+:root:not(.premium-dark):not(.dark) .text-white-force,
+:root:not(.premium-dark):not(.dark) .text-white-force *,
+:root:not(.premium-dark):not(.dark) .bg-[#FF1E1E]\/10 *,
+:root:not(.premium-dark):not(.dark) .bg-rose-500,
+:root:not(.premium-dark):not(.dark) .bg-rose-600 {
+  color: #FFFFFF !important;
+}
+
+/* Guard select dropdown options in Light Mode */
+:root:not(.premium-dark):not(.dark) option {
+  background-color: #FFFFFF !important;
+  color: #0B132B !important;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Pulsing heart or blood droplet visual */
+@keyframes double-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.animate-heartbeat {
+  animation: double-pulse 2s ease-in-out infinite;
+}
+
+/* Red words premium heartbeat and micro glow */
+@keyframes heart-glow-play {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(220, 38, 38, 0.25));
+  }
+  15% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 14px rgba(220, 38, 38, 0.65));
+  }
+  30% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 3px rgba(220, 38, 38, 0.3));
+  }
+  45% {
+    transform: scale(1.03);
+    filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.55));
+  }
+  70%, 90% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(220, 38, 38, 0.2));
+  }
+}
+
+.animate-red-word {
+  animation: heart-glow-play 2.5s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Shining linear gradient for red words */
+@keyframes text-shine {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.shining-text {
+  background: linear-gradient(110deg, #dc2626 25%, #fecaca 45%, #f87171 55%, #dc2626 75%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shine 3.5s linear infinite;
+  display: inline-block;
+}
+
+/* Backdrop light gentle floating glow */
+@keyframes float-text-glow {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0px) scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-10px) scale(1.15);
+    opacity: 0.25;
+  }
+}
+
+.animate-float-text-bg {
+  animation: float-text-glow 6s ease-in-out infinite;
+}
+
+/* Premium falling blood drop and ripple splash */
+@keyframes premium-falling-drop {
+  0% {
+    transform: translateY(-6px) scale(0.65, 0.85);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0px) scale(0.9, 1.1);
+  }
+  45% {
+    transform: translateY(14px) scale(1, 1.15);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(26px) scale(1.1, 1.25);
+    opacity: 0.95;
+    filter: drop-shadow(0 2px 5px rgba(220, 38, 38, 0.45));
+  }
+  80% {
+    /* Touch bottom splash */
+    transform: translateY(29px) scale(1.5, 0.5);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.7));
+  }
+  88% {
+    /* Spread splash */
+    transform: translateY(30px) scale(2.2, 0.25);
+    opacity: 0.3;
+  }
+  94%, 100% {
+    transform: translateY(31px) scale(2.5, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes splash-ripple {
+  0%, 75% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  80% {
+    transform: scale(0.5);
+    opacity: 0.95;
+  }
+  92% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.animate-drop-fall {
+  animation: premium-falling-drop 2.5s cubic-bezier(0.4, 0.05, 0.8, 0.3) infinite;
+}
+
+.animate-ripple-splash {
+  animation: splash-ripple 2.5s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  transform-origin: center center;
+}
+
+
+
