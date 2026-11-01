@@ -46,7 +46,6 @@ export default function App() {
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
   const [authModalView, setAuthModalView] = useState<'login' | 'register'>('login');
   const [requestBloodModalOpen, setRequestBloodModalOpen] = useState<boolean>(false);
-  const [districtModalOpen, setDistrictModalOpen] = useState<boolean>(false);
 
   // Load state spinners
   const [isLoadingDonors, setIsLoadingDonors] = useState<boolean>(false);
@@ -97,7 +96,7 @@ export default function App() {
     }
   };
 
-  const fetchDonors = async (filters: { bloodGroup?: string; location?: string; availableOnly?: boolean; district?: string }) => {
+  const fetchDonors = async (filters: { bloodGroup?: string; location?: string; availableOnly?: boolean }) => {
     setIsLoadingDonors(true);
     try {
       const data = await api.getDonors(filters);
@@ -233,9 +232,6 @@ export default function App() {
             currentTab={currentTab}
             setCurrentTab={(tab) => {
               setCurrentTab(tab);
-              if (tab === 'search') {
-                setDistrictModalOpen(true);
-              }
             }}
             onOpenRegister={() => {
               setAuthModalView('register');
@@ -265,8 +261,6 @@ export default function App() {
               }}
               onSearch={fetchDonors}
               isLoading={isLoadingDonors}
-              districtModalOpen={districtModalOpen}
-              setDistrictModalOpen={setDistrictModalOpen}
             />
           )}
 
@@ -322,7 +316,7 @@ export default function App() {
             <Droplet className="h-4.5 w-4.5 text-[#FF1E1E] fill-[#FF1E1E]" />
             <span className="font-display font-bold text-white tracking-wide">RedLife Network</span>
             <span className="text-gray-600">&bull;</span>
-            <span className="text-gray-300">Trush University, Barishal</span>
+            <span className="text-gray-300">University Campus Network</span>
           </div>
           <p className="text-[11px] font-medium text-gray-500">
             &copy; 2569 - 2026 RedLife Univ Campus Donor Connection System. Built with pure state control handlers.

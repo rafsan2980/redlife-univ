@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, BloodRequest, BloodGroup, BANGLADESH_DISTRICTS, Notification } from '../types';
+import { User, BloodRequest, BloodGroup, Notification } from '../types';
 import { api } from '../lib/api';
 import { 
   ShieldCheck, 
@@ -44,7 +44,6 @@ export default function DonorDashboard({
   const [bloodGroup, setBloodGroup] = useState<BloodGroup>(currentUser.bloodGroup);
   const [department, setDepartment] = useState(currentUser.department);
   const [hall, setHall] = useState(currentUser.hall);
-  const [district, setDistrict] = useState(currentUser.district || 'Barishal');
   const [lastDonationDate, setLastDonationDate] = useState(currentUser.lastDonationDate);
   const [isAvailable, setIsAvailable] = useState(currentUser.isAvailable);
   const [isSaving, setIsSaving] = useState(false);
@@ -100,7 +99,6 @@ export default function DonorDashboard({
         bloodGroup,
         department,
         hall,
-        district,
         lastDonationDate,
         isAvailable,
       });
@@ -339,10 +337,6 @@ export default function DonorDashboard({
                     <span className="text-gray-400 font-semibold uppercase tracking-wider">Required Date/Time</span>
                     <strong className="text-white text-right">{selectedNotif.requiredDate} &bull; {selectedNotif.requiredTime || 'ASAP'}</strong>
                   </div>
-                  <div className="py-2.5 flex justify-between">
-                    <span className="text-gray-400 font-semibold uppercase tracking-wider">Local District</span>
-                    <strong className="text-white text-right">{selectedNotif.district || 'Barishal'}</strong>
-                  </div>
                   <div className="py-3 flex flex-col pt-3">
                     <span className="text-gray-400 font-semibold uppercase tracking-wider mb-1.5">Direct Clinical Contact</span>
                     <a 
@@ -430,22 +424,7 @@ export default function DonorDashboard({
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-wide text-gray-400 mb-2">
-                  District
-                </label>
-                <select
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                  className="h-10.5 w-full rounded-xl border border-[#0B1220] border-white/8 bg-[#111827] px-3 text-sm font-bold text-white outline-none focus:border-[#FF1E1E]"
-                >
-                  {BANGLADESH_DISTRICTS.map((dist) => (
-                    <option key={dist} value={dist} className="bg-[#0B1220]">
-                      {dist}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
 
               <div>
                 <label className="block text-xs font-extrabold uppercase tracking-wide text-gray-400 mb-2">

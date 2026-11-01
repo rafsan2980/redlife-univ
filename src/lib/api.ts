@@ -15,6 +15,11 @@ export function setAuthToken(token: string) {
   }
 }
 
+// Free-hosting note: when the frontend is on Vercel and the backend on
+// Render, set VITE_API_URL to the Render URL (e.g. https://...onrender.com).
+// When both run on the same host (Render alone), leave it empty.
+const API_BASE = (import.meta as any).env?.VITE_API_URL || '';
+
 // Low-overhead standard fetch caller with headers
 async function fetchAPI(endpoint: string, options: RequestInit = {}) {
   const headers = {
@@ -23,7 +28,7 @@ async function fetchAPI(endpoint: string, options: RequestInit = {}) {
     ...options.headers,
   };
 
-  const response = await fetch(endpoint, {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
   });
@@ -63,12 +68,11 @@ export const api = {
   },
 
   // Donors
-  async getDonors(filters: { bloodGroup?: string; location?: string; availableOnly?: boolean; district?: string }): Promise<User[]> {
+  async getDonors(filters: { bloodGroup?: string; location?: string; availableOnly?: boolean }): Promise<User[]> {
     const params = new URLSearchParams();
     if (filters.bloodGroup) params.append('bloodGroup', filters.bloodGroup);
     if (filters.location) params.append('location', filters.location);
     if (filters.availableOnly) params.append('availableOnly', 'true');
-    if (filters.district) params.append('district', filters.district);
 
     return fetchAPI(`/api/donors?${params.toString()}`);
   },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { User, BloodRequest, BloodGroup, LiveActivity, BANGLADESH_DISTRICTS } from '../types';
+import { User, BloodRequest, BloodGroup, LiveActivity } from '../types';
 import { 
   ShieldCheck, 
   UserMinus, 
@@ -22,7 +22,8 @@ import {
   AlertTriangle,
   Flame,
   Award,
-  Activity
+  Activity,
+  Home
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -49,7 +50,6 @@ export default function AdminDashboard({
   // Search & filter states - Donors tab
   const [donorSearch, setDonorSearch] = useState('');
   const [donorBloodGroup, setDonorBloodGroup] = useState<string>('');
-  const [donorDistrict, setDonorDistrict] = useState<string>('');
   const [donorDept, setDonorDept] = useState<string>('');
   const [donorAvailability, setDonorAvailability] = useState<string>(''); // 'all', 'available', 'resting'
 
@@ -70,7 +70,6 @@ export default function AdminDashboard({
   const [editDonorBloodGroup, setEditDonorBloodGroup] = useState<BloodGroup>('O+');
   const [editDonorDept, setEditDonorDept] = useState('');
   const [editDonorHall, setEditDonorHall] = useState('');
-  const [editDonorDistrict, setEditDonorDistrict] = useState('');
   const [editDonorRoll, setEditDonorRoll] = useState('');
   const [editDonorBatch, setEditDonorBatch] = useState('');
   const [editDonorDonationCount, setEditDonorDonationCount] = useState(0);
@@ -165,7 +164,6 @@ export default function AdminDashboard({
     setEditDonorBloodGroup(donor.bloodGroup || 'O+');
     setEditDonorDept(donor.department || '');
     setEditDonorHall(donor.hall || '');
-    setEditDonorDistrict(donor.district || 'Barishal');
     setEditDonorRoll(donor.roll || '');
     setEditDonorBatch(donor.batch || '');
     setEditDonorDonationCount(donor.donationCount || 0);
@@ -186,7 +184,6 @@ export default function AdminDashboard({
         bloodGroup: editDonorBloodGroup,
         department: editDonorDept,
         hall: editDonorHall,
-        district: editDonorDistrict,
         roll: editDonorRoll,
         batch: editDonorBatch,
         donationCount: Number(editDonorDonationCount),
@@ -278,14 +275,14 @@ export default function AdminDashboard({
     }
   });
 
-  const districtStatsCount: Record<string, number> = {};
+  const hallStatsCount: Record<string, number> = {};
   users.forEach(u => {
     if (u.role === 'donor' && !u.isSuspended) {
-      const dist = u.district || 'Barishal';
-      districtStatsCount[dist] = (districtStatsCount[dist] || 0) + 1;
+      const hall = u.hall || 'Main Campus';
+      hallStatsCount[hall] = (hallStatsCount[hall] || 0) + 1;
     }
   });
-  const sortedDistricts = Object.entries(districtStatsCount).sort((a, b) => b[1] - a[1]);
+  const sortedHalls = Object.entries(hallStatsCount).sort((a, b) => b[1] - a[1]);
 
   const filteredUsers = users.filter(u => {
     if (u.id === currentUser.id) return false;
@@ -298,7 +295,6 @@ export default function AdminDashboard({
       u.hall.toLowerCase().includes(donorSearch.toLowerCase());
 
     const matchBlood = donorBloodGroup === '' || u.bloodGroup === donorBloodGroup;
-    const matchDistrict = donorDistrict === '' || u.district === donorDistrict;
     const matchDept = donorDept === '' || u.department.toLowerCase().includes(donorDept.toLowerCase());
 
     let matchAvail = true;
@@ -308,7 +304,7 @@ export default function AdminDashboard({
       matchAvail = u.isAvailable === false;
     }
 
-    return matchSearch && matchBlood && matchDistrict && matchDept && matchAvail;
+    return matchSearch && matchBlood && matchDept && matchAvail;
   });
 
   const filteredRequests = requests.filter(r => {
@@ -484,27 +480,27 @@ export default function AdminDashboard({
                   </div>
                 </div>
 
-                {/* District Wise Donor Counts */}
+                {/* Hall Wise Donor Counts */}
                 <div className="rounded-2xl border border-white/8 bg-[#0B1220] p-6 shadow-xl flex flex-col justify-between">
                   <div>
                     <h3 className="font-display text-sm font-bold text-white uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                      <Map className="h-4 w-4 text-[#FF1E1E]" />
-                      <span>District-Wise Donor Distribution</span>
+                      <Home className="h-4 w-4 text-[#FF1E1E]" />
+                      <span>Residential Hall Distribution</span>
                     </h3>
-                    <p className="text-[11px] text-gray-400 mb-4">Total mapped campus donors based on original homeland district</p>
+                    <p className="text-[11px] text-gray-400 mb-4">Total campus donors by university dormitory/residence</p>
                   </div>
                   
-                  {sortedDistricts.length === 0 ? (
-                    <div className="py-6 text-center text-xs text-gray-500 font-semibold italic">No localized district statistics logged.</div>
+                  {sortedHalls.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-gray-500 font-semibold italic">No dormitory statistics logged.</div>
                   ) : (
                     <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 max-h-48 overflow-y-auto pr-2 custom-scrollbar scrollbar-thin scrollbar-thumb-white/10">
-                      {sortedDistricts.map(([district, num]) => {
+                      {sortedHalls.map(([hallName, num]) => {
                         const totalDonors = users.filter(u => u.role === 'donor').length || 1;
                         const pct = Math.max(5, Math.min(100, (num / totalDonors) * 100));
                         return (
-                          <div key={district} className="flex flex-col space-y-1">
+                          <div key={hallName} className="flex flex-col space-y-1">
                             <div className="flex items-center justify-between text-xs text-gray-350 font-semibold">
-                              <span>{district}</span>
+                              <span className="truncate pr-1">{hallName}</span>
                               <span className="font-mono text-[#FF1E1E] font-extrabold">{num}</span>
                             </div>
                             <div className="h-1.5 w-full bg-[#111827] rounded-full overflow-hidden border border-white/5">
@@ -620,20 +616,7 @@ export default function AdminDashboard({
                     </select>
                   </div>
 
-                  <div className="sm:col-span-2">
-                    <select
-                      value={donorDistrict}
-                      onChange={(e) => setDonorDistrict(e.target.value)}
-                      className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-2.5 text-xs font-bold text-white outline-none focus:border-[#FF1E1E]"
-                    >
-                      <option value="" className="bg-[#0B1220]">District: All</option>
-                      {BANGLADESH_DISTRICTS.map(dist => (
-                        <option key={dist} value={dist} className="bg-[#0B1220]">{dist}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-3">
                     <select
                       value={donorAvailability}
                       onChange={(e) => setDonorAvailability(e.target.value)}
@@ -645,7 +628,7 @@ export default function AdminDashboard({
                     </select>
                   </div>
 
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-3">
                     <input
                       type="text"
                       placeholder="Department filter..."
@@ -702,7 +685,7 @@ export default function AdminDashboard({
                             <p className="text-[10px] font-bold text-gray-400 truncate">{donor.department}</p>
                             <p className="text-[10px] text-gray-500 flex items-center font-semibold gap-0.5 mt-0.5">
                               <MapPin className="h-3 w-3 text-[#FF1E1E] shrink-0" />
-                              <span>{donor.hall} &bull; <strong>{donor.district || 'Barishal'}</strong></span>
+                              <span>{donor.hall} {donor.batch ? `&bull; ${donor.batch}` : ''}</span>
                             </p>
                           </div>
                         </div>
@@ -1106,18 +1089,7 @@ export default function AdminDashboard({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">district</label>
-                  <select
-                    value={editDonorDistrict}
-                    onChange={(e) => setEditDonorDistrict(e.target.value)}
-                    className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-bold text-white outline-none focus:border-[#FF1E1E]"
-                  >
-                    {BANGLADESH_DISTRICTS.map(dist => (
-                      <option key={dist} value={dist} className="bg-[#0B1220]">{dist}</option>
-                    ))}
-                  </select>
-                </div>
+
 
                 <div>
                   <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">Roll ID Number</label>

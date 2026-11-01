@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Droplet, Check } from 'lucide-react';
-import { BloodGroup, BANGLADESH_DISTRICTS } from '../types';
+import { BloodGroup } from '../types';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -39,7 +39,6 @@ export default function AuthModal({
   const [donationCount, setDonationCount] = useState<number | ''>('');
   const [isAvailable, setIsAvailable] = useState(true);
   const [bloodGroup, setBloodGroup] = useState<BloodGroup>('O+');
-  const [district, setDistrict] = useState('Barishal');
   const [password, setPassword] = useState('');
 
   // Login States
@@ -73,9 +72,8 @@ export default function AuthModal({
         phone,
         bloodGroup,
         department,
-        hall: address, // legacy support for search & view layout mapping
+        hall: address, // maps to residential hall
         address,
-        district,
         roll,
         batch,
         donationCount: donationCount === '' ? 0 : Number(donationCount),
@@ -280,41 +278,10 @@ export default function AuthModal({
                       </select>
                     </div>
 
-                    {/* District Selection */}
+                    {/* 3. Department */}
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                        District
-                      </label>
-                      <select
-                        value={district}
-                        onChange={(e) => setDistrict(e.target.value)}
-                        className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-bold text-white outline-none focus:border-[#FF1E1E]"
-                      >
-                        {BANGLADESH_DISTRICTS.map(dist => (
-                          <option key={dist} value={dist} className="bg-[#0B1220]">{dist}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* 3. Address */}
-                    <div className="sm:col-span-1">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                        Address
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Pritilata Hall, Room 304"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
-                      />
-                    </div>
-
-                    {/* 4. Department */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                        Department
+                        Academic Department
                       </label>
                       <input
                         type="text"
@@ -322,6 +289,21 @@ export default function AuthModal({
                         placeholder="e.g. CSE, BBA, Pharmacy"
                         value={department}
                         onChange={(e) => setDepartment(e.target.value)}
+                        className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
+                      />
+                    </div>
+
+                    {/* 4. Residential Hall */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                        Residential Hall / Dormitory
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Sher-e-Bangla Hall, Room 304"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
                         className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
                       />
                     </div>

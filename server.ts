@@ -99,7 +99,6 @@ const DEFAULT_DB: DB = {
       department: "University Medical Complex",
       hall: "Faculty Residence",
       address: "Faculty Residence",
-      district: "Barishal",
       roll: "01",
       batch: "Faculty Member",
       donationCount: 15,
@@ -119,7 +118,6 @@ const DEFAULT_DB: DB = {
       department: "Computer Science & Engineering",
       hall: "Sher-e-Bangla Hall",
       address: "Sher-e-Bangla Hall, Room 402",
-      district: "Barishal",
       roll: "56",
       batch: "48th Batch",
       donationCount: 4,
@@ -139,7 +137,6 @@ const DEFAULT_DB: DB = {
       department: "Business Administration",
       hall: "Pritilata Hall",
       address: "Pritilata Hall, Room 108",
-      district: "Dhaka",
       roll: "22",
       batch: "50th Batch",
       donationCount: 2,
@@ -159,7 +156,6 @@ const DEFAULT_DB: DB = {
       department: "Electrical & Electronic Engineering",
       hall: "Fazlul Huq Hall",
       address: "Fazlul Huq Hall, Room 215",
-      district: "Barishal",
       roll: "89",
       batch: "49th Batch",
       donationCount: 3,
@@ -179,7 +175,6 @@ const DEFAULT_DB: DB = {
       department: "Mechanical Engineering",
       hall: "Lutfur Rahman Hall",
       address: "Lutfur Rahman Hall, Room 303",
-      district: "Patuakhali",
       roll: "12",
       batch: "51st Batch",
       donationCount: 0,
@@ -199,7 +194,6 @@ const DEFAULT_DB: DB = {
       department: "Chemical Engineering",
       hall: "Suhrawardy Hall",
       address: "Suhrawardy Hall, Room 204",
-      district: "Barishal",
       roll: "71",
       batch: "52nd Batch",
       donationCount: 5,
@@ -246,7 +240,7 @@ const DEFAULT_DB: DB = {
       patientName: "Jamal Uddin (Staff Member)",
       bloodGroup: "B+",
       unitsRequired: 3,
-      hospital: "Dhaka Medical College & Hospital (Maternity Cabin)",
+      hospital: "University Medical Center (Maternity Ward)",
       phone: "01944556677",
       dateNeeded: "2026-05-18",
       reason: "Emergency C-Section supply for staff member's spouse.",
@@ -287,20 +281,6 @@ function readDB(): DB {
     const data = fs.readFileSync(DB_FILE, "utf-8");
     const parsed: DB = JSON.parse(data);
     let migrated = false;
-    if (parsed.users && Array.isArray(parsed.users)) {
-      parsed.users.forEach(u => {
-        if (!u.district) {
-          if (u.id === "admin-1") u.district = "Barishal";
-          else if (u.id === "donor-1") u.district = "Barishal";
-          else if (u.id === "donor-2") u.district = "Dhaka";
-          else if (u.id === "donor-3") u.district = "Barishal";
-          else if (u.id === "donor-4") u.district = "Patuakhali";
-          else if (u.id === "donor-5") u.district = "Barishal";
-          else u.district = "Barishal"; // Default
-          migrated = true;
-        }
-      });
-    }
     if (!parsed.notifications) {
       parsed.notifications = [];
       migrated = true;
@@ -342,9 +322,21 @@ function writeDB(data: DB) {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
   app.use(express.json());
+
+  // Free-hosting note: Render sets PORT itself, and the Vercel frontend
+  // (a different origin) can call /api here when VITE_API_URL points to it.
+  app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "*");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
+    }
+    next();
+  });
 
   // Seed Supabase with baseline local users if active
   try {
@@ -603,7 +595,7 @@ async function startServer() {
       isLoggedIn = dbTemp.users.some(u => u.id === token);
     }
 
-    const { bloodGroup, location, availableOnly, district } = req.query;
+    const { bloodGroup, location, availableOnly } = req.query;
     let filteredDonors = [];
 
     if (isSupabaseActive()) {
@@ -621,10 +613,6 @@ async function startServer() {
 
     if (bloodGroup && bloodGroup !== "") {
       filteredDonors = filteredDonors.filter(u => u.bloodGroup === bloodGroup);
-    }
-
-    if (district && district !== "") {
-      filteredDonors = filteredDonors.filter(u => u.district === district);
     }
 
     if (location && location !== "") {
@@ -763,7 +751,6 @@ async function startServer() {
         emergencyLevel: newRequest.emergencyLevel || "Normal",
         requiredDate: newRequest.dateNeeded,
         requiredTime: newRequest.requiredTime || "",
-        district: donor.district || "Barishal",
         message: `URGENT ${newRequest.bloodGroup} blood needed at ${newRequest.hospital}.`,
         isRead: false,
         createdAt: newRequest.createdAt

@@ -241,12 +241,12 @@ export default function RequestBloodModal({
 
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                      Hospital Address / District <span className="text-[#FF1E1E]">*</span>
+                      Hospital Address / Campus Area <span className="text-[#FF1E1E]">*</span>
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Dhanmondi, Dhaka"
+                      placeholder="e.g. Campus Medical Wing / Central Clinic Road"
                       value={hospitalAddress}
                       onChange={(e) => setHospitalAddress(e.target.value)}
                       className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
