@@ -287,6 +287,23 @@ textarea:focus {
   color: #0B132B !important;
 }
 
+/* Header/footer readable text on deep green: this rule is deliberately
+   more specific than the light-mode global text rules above, so nav and
+   footer text stays white on green instead of being forced dark.
+   It intentionally does NOT cover text-[#0F5A3A] (active nav on white)
+   or text-[#0B132B] (dark text on gold buttons). */
+:root:not(.premium-dark):not(.dark) header .text-white,
+:root:not(.premium-dark):not(.dark) header .text-gray-300,
+:root:not(.premium-dark):not(.dark) header .text-gray-400,
+:root:not(.premium-dark):not(.dark) header .text-gray-200,
+:root:not(.premium-dark):not(.dark) footer .text-white,
+:root:not(.premium-dark):not(.dark) footer .text-gray-300,
+:root:not(.premium-dark):not(.dark) footer .text-gray-400,
+:root:not(.premium-dark):not(.dark) footer .text-gray-500,
+:root:not(.premium-dark):not(.dark) footer .text-gray-600 {
+  color: #FFFFFF !important;
+}
+
 .font-display {
   font-family: var(--font-display);
 }
