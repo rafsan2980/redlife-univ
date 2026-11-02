@@ -278,8 +278,8 @@ export default function DonorDashboard({
 
                     <div className="text-right shrink-0 select-none">
                       <span className="text-[9.5px] text-gray-500 font-mono">{new Date(notif.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                      {!notif.isRead && (
-                        <button 
+                      {!notif.isRead && currentUser.role !== 'admin' && (
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleMarkRead(notif.id);

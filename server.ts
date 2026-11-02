@@ -8,6 +8,7 @@ import {
   dbUpdateDonor,
   dbDeleteDonor,
   dbGetNotifications,
+  dbGetAllNotifications,
   dbInsertNotifications,
   dbMarkNotificationRead,
   getCompatibleDonorGroups,
@@ -744,22 +745,25 @@ async function startServer() {
     db.requests.unshift(newRequest);
 
     // Dynamic Notifications Triggering Logic: compatible blood groups,
-    // non-suspended donors. Donors are read from permanent Supabase when
-    // active, so donors registered before a redeploy still get notified;
-    // the local file is only a fallback when Supabase is unavailable.
+    // non-suspended donors and admins with a compatible group (an admin
+    // who is also a donor must see the alert in their own dashboard too).
+    // Donor pool is the UNION of permanent Supabase donors and local
+    // users (local admins and local-only donors are not in Supabase, so
+    // replacing local users with Supabase donors would hide them).
     // Notifications are saved to Supabase when its table exists, so they
     // survive a redeploy, and fall back to the local file otherwise.
     let donorPool: any[] = db.users;
     if (isSupabaseActive()) {
       try {
         const supabaseDonors = await dbGetDonors();
-        if (supabaseDonors.length > 0) donorPool = supabaseDonors;
+        const seen = new Set(supabaseDonors.map((u: any) => u.id));
+        donorPool = [...supabaseDonors, ...db.users.filter((u: any) => !seen.has(u.id))];
       } catch (err) {
         console.error("Falling back to local donors for notifications:", err);
       }
     }
     const compatibleGroups = getCompatibleDonorGroups(newRequest.bloodGroup);
-    const matchingDonors = donorPool.filter(u => u.role === "donor" && compatibleGroups.includes(u.bloodGroup) && !u.isSuspended);
+    const matchingDonors = donorPool.filter(u => (u.role === "donor" || u.role === "admin") && compatibleGroups.includes(u.bloodGroup) && !u.isSuspended);
 
     const newNotifications = matchingDonors.map(donor => ({
       id: "notif-" + Math.random().toString(36).substring(2, 11),
@@ -1116,17 +1120,26 @@ async function startServer() {
     res.json(db.activities || []);
   });
 
-  // Notifications: Get all notifications for current donor.
-  // Supabase first when active (permanent, survives redeploy);
-  // local file is the fallback when Supabase or its table is unavailable.
+  // Notifications: Get notifications for the current user.
+  // Admin users see ALL notifications (they coordinate every request),
+  // donors see only their own. Supabase and local lists are MERGED
+  // (deduplicated by id, newest first) — returning only the Supabase
+  // list would hide local-only notifications, and vice versa.
   app.get("/api/notifications", authenticate, async (req: any, res) => {
-    if (isSupabaseActive()) {
-      const supabaseList = await dbGetNotifications(req.user.id);
-      if (supabaseList !== null) return res.json(supabaseList);
-    }
     const db = readDB();
-    const list = (db.notifications || []).filter(n => n.donorId === req.user.id);
-    res.json(list);
+    const localList = (db.notifications || []).filter(n => req.user.role === "admin" || n.donorId === req.user.id);
+    let merged = [...localList];
+    if (isSupabaseActive()) {
+      const supabaseList = req.user.role === "admin"
+        ? await dbGetAllNotifications()
+        : await dbGetNotifications(req.user.id);
+      if (supabaseList !== null) {
+        const seen = new Set(merged.map(n => n.id));
+        merged = [...merged, ...supabaseList.filter(n => !seen.has(n.id))];
+      }
+    }
+    merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    res.json(merged);
   });
 
   // Notifications: Mark as read (Supabase first, local fallback)

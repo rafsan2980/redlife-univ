@@ -337,6 +337,30 @@ export async function dbGetNotifications(donorId: string): Promise<any[] | null>
   }
 }
 
+/**
+ * Fetch ALL notifications from Supabase (for admin users, who coordinate
+ * every request). Returns null when Supabase is unavailable or the table
+ * has not been created yet, so the caller can fall back to local storage.
+ */
+export async function dbGetAllNotifications(): Promise<any[] | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("Supabase Error getting all notifications:", error.message);
+      return null;
+    }
+    return (data || []).map(mapToAppNotification);
+  } catch (error) {
+    console.error("Exception getting all notifications from Supabase:", error);
+    return null;
+  }
+}
+
 /** Insert notifications into Supabase. Returns false when it could not save. */
 export async function dbInsertNotifications(notifications: any[]): Promise<boolean> {
   const supabase = getSupabase();
