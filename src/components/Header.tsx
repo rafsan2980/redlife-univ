@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Droplet, User, LogOut, ShieldAlert, Menu, X, CheckCircle2, Sun, Moon } from 'lucide-react';
+import { Droplet, User, LogOut, ShieldAlert, Menu, X, CheckCircle2 } from 'lucide-react';
 import { User as UserType } from '../types';
 
 interface HeaderProps {
@@ -9,8 +9,6 @@ interface HeaderProps {
   currentTab: string;
   setCurrentTab: (tab: string) => void;
   onOpenRequestBlood: () => void;
-  theme: 'light' | 'dark';
-  toggleTheme: () => void;
 }
 
 export default function Header({
@@ -20,8 +18,6 @@ export default function Header({
   currentTab,
   setCurrentTab,
   onOpenRequestBlood,
-  theme,
-  toggleTheme,
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -52,8 +48,9 @@ export default function Header({
           className="flex cursor-pointer items-center space-x-1 sm:space-x-2 shrink select-none overflow-visible" 
           onClick={() => handleTabChange('search')}
         >
-          {/* Falling Blood Drop Track Container */}
-          <div className="hidden min-[390px]:flex relative w-3.5 sm:w-4.5 h-8.5 sm:h-10 items-center justify-center overflow-visible select-none pointer-events-none shrink-0 border-none">
+          {/* Falling Blood Drop Track Container - now in a white box like the nav items,
+              with the falling animation kept exactly as before */}
+          <div className="hidden min-[390px]:flex relative w-6 sm:w-7 h-9 sm:h-11 items-center justify-center overflow-visible select-none pointer-events-none shrink-0 rounded-lg bg-white shadow-sm border border-white">
             {/* Falling Droplet Element */}
             <div className="absolute top-0 bottom-0 left-0 right-0 flex justify-center text-red-600 overflow-visible">
               <svg 
@@ -91,10 +88,10 @@ export default function Header({
             <button
               key={item.id}
               onClick={() => handleTabChange(item.id)}
-              className={`rounded-lg border px-4 py-2 font-display text-sm font-semibold transition-all duration-250 ${
+              className={`rounded-lg border px-4 py-2 font-display text-sm font-semibold transition-all duration-250 bg-white text-[#0F5A3A] ${
                 currentTab === item.id
-                  ? 'bg-white text-[#0F5A3A] border-white shadow-sm'
-                  : 'bg-[#14532D] text-white border-white/70 hover:bg-white hover:text-[#0F5A3A]'
+                  ? 'border-[#F59E0B] shadow-sm'
+                  : 'border-white hover:border-[#F59E0B]'
               }`}
             >
               {item.label}
@@ -102,21 +99,8 @@ export default function Header({
           ))}
         </nav>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - night mode toggle removed, site stays in light theme */}
         <div className="hidden items-center space-x-3 md:flex">
-          {/* Theme Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            className="group relative flex h-9.5 w-9.5 items-center justify-center rounded-xl bg-[#14532D] text-white hover:bg-white hover:text-[#0F5A3A] transition-all duration-300 border border-white/70 cursor-pointer active:scale-95 overflow-hidden"
-            aria-label="Toggle Theme Mode"
-            title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-          >
-            <span className="relative flex h-5 w-5 items-center justify-center">
-              <Moon className={`absolute h-5 w-5 text-indigo-300 transition-all duration-500 transform ${theme === 'light' ? 'rotate-0 scale-100 opacity-100' : 'rotate-90 scale-0 opacity-0'}`} />
-              <Sun className={`absolute h-5 w-5 text-amber-400 transition-all duration-500 transform ${theme === 'dark' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'}`} />
-            </span>
-          </button>
-
           <button
             onClick={onOpenRequestBlood}
             className="flex items-center space-x-1 rounded-lg bg-[#FF1E1E] px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-white transition-all duration-250 hover:bg-[#ff3c3c] hover:shadow-[0_0_20px_rgba(255,30,30,0.65)] hover:scale-[1.02] shadow-[0_0_12px_rgba(255,30,30,0.35)] cursor-pointer"
@@ -127,7 +111,7 @@ export default function Header({
           {currentUser ? (
             <div className="flex items-center space-x-3 border-l border-white/40 pl-3">
               <div 
-                className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white/70 bg-[#14532D] py-1 px-2 transition-colors hover:bg-white hover:text-[#0F5A3A]"
+                className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white bg-white py-1 px-2 transition-colors"
                 onClick={() => handleTabChange('dashboard')}
               >
                 <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#FF1E1E]/20 text-[#FF1E1E] border border-[#FF1E1E]/30">
@@ -137,10 +121,10 @@ export default function Header({
                   )}
                 </div>
                 <div className="text-left leading-none">
-                  <p className="max-w-[120px] truncate text-xs font-bold text-white">
+                  <p className="max-w-[120px] truncate text-xs font-bold text-[#0F5A3A]">
                     {currentUser.name.split(' ')[0]}
                   </p>
-                  <p className="text-[10px] font-semibold text-emerald-400 uppercase">
+                  <p className="text-[10px] font-semibold text-emerald-600 uppercase">
                     {currentUser.bloodGroup} {currentUser.isVerified ? 'Verified' : 'Member'}
                   </p>
                 </div>
@@ -157,7 +141,7 @@ export default function Header({
             <div className="flex items-center space-x-2 border-l border-white/40 pl-3">
               <button
                 onClick={() => onOpenAuth('login')}
-                className="rounded-lg border border-white/70 bg-[#14532D] px-3 py-2 font-display text-xs font-bold uppercase tracking-wider text-white hover:bg-white hover:text-[#0F5A3A]"
+                className="rounded-lg border border-white bg-white px-3 py-2 font-display text-xs font-bold uppercase tracking-wider text-[#0F5A3A]"
               >
                 Log In
               </button>
@@ -171,20 +155,8 @@ export default function Header({
           )}
         </div>
 
-        {/* Mobile menu button */}
+        {/* Mobile menu button - night mode toggle removed */}
         <div className="flex items-center space-x-1 sm:space-x-2 md:hidden shrink-0">
-          {/* Mobile Theme Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/5 text-gray-300 border border-white/8 active:bg-white/10 transition-all cursor-pointer select-none overflow-hidden"
-            aria-label="Toggle Theme"
-          >
-            <span className="relative flex h-4 w-4 items-center justify-center">
-              <Moon className={`absolute h-4 w-4 text-indigo-300 transition-all duration-500 transform ${theme === 'light' ? 'rotate-0 scale-100 opacity-100' : 'rotate-90 scale-0 opacity-0'}`} />
-              <Sun className={`absolute h-4 w-4 text-amber-400 transition-all duration-500 transform ${theme === 'dark' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'}`} />
-            </span>
-          </button>
-
           <button
             onClick={onOpenRequestBlood}
             className="flex items-center justify-center text-center rounded-xl bg-[#FF1E1E] text-white shadow-[0_0_15px_rgba(255,30,30,0.4)] hover:bg-[#ff3c3c] active:scale-95 transition-all duration-200 font-display text-[9px] min-[365px]:text-[11px] font-extrabold uppercase tracking-tight py-1.5 px-2.5 min-[365px]:px-3.5 shrink-0 select-none cursor-pointer"
@@ -211,10 +183,10 @@ export default function Header({
               <button
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
-                className={`block w-full rounded-lg border px-4 py-2.5 text-left font-display text-sm font-semibold transition-all ${
+                className={`block w-full rounded-lg border px-4 py-2.5 text-left font-display text-sm font-semibold transition-all bg-white text-[#0F5A3A] ${
                   currentTab === item.id
-                    ? 'bg-white text-[#0F5A3A] border-white'
-                    : 'bg-[#14532D] text-white border-white/70 hover:bg-white hover:text-[#0F5A3A]'
+                    ? 'border-[#F59E0B]'
+                    : 'border-white'
                 }`}
               >
                 {item.label}
@@ -237,7 +209,7 @@ export default function Header({
                 <div className="grid grid-cols-2 gap-2 px-4">
                   <button
                     onClick={() => handleTabChange('dashboard')}
-                    className="flex items-center justify-center space-x-1 rounded-lg bg-white/5 py-2 text-xs font-semibold text-gray-200 hover:bg-white/10"
+                    className="flex items-center justify-center space-x-1 rounded-lg border border-white bg-white py-2 text-xs font-semibold text-[#0F5A3A]"
                   >
                     <span>Dashboard</span>
                   </button>
@@ -257,7 +229,7 @@ export default function Header({
                     setMobileMenuOpen(false);
                     onOpenAuth('login');
                   }}
-                  className="rounded-lg border border-white/70 bg-[#14532D] py-2.5 text-center font-display text-xs font-bold uppercase tracking-wider text-white hover:bg-white hover:text-[#0F5A3A]"
+                  className="rounded-lg border border-white bg-white py-2.5 text-center font-display text-xs font-bold uppercase tracking-wider text-[#0F5A3A]"
                 >
                   Log In
                 </button>

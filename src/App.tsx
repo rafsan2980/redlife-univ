@@ -13,23 +13,13 @@ import { User, BloodRequest, DonorStats } from './types';
 import { ShieldCheck, Heart, AlertCircle, Droplet, Sparkles, LogIn, Users } from 'lucide-react';
 
 export default function App() {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('blood_net_theme') as 'light' | 'dark') || 'light';
-  });
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
-
+  // Night mode removed at the user's request: the site always stays in light theme,
+  // even if a previous visit stored a dark-mode preference.
   useEffect(() => {
-    localStorage.setItem('blood_net_theme', theme);
+    localStorage.setItem('blood_net_theme', 'light');
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('premium-dark', 'dark');
-    } else {
-      root.classList.remove('premium-dark', 'dark');
-    }
-  }, [theme]);
+    root.classList.remove('premium-dark', 'dark');
+  }, []);
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [donors, setDonors] = useState<User[]>([]);
@@ -218,8 +208,6 @@ export default function App() {
         onOpenRequestBlood={() => {
           setRequestBloodModalOpen(true);
         }}
-        theme={theme}
-        toggleTheme={toggleTheme}
       />
 
       {/* Main Layout Entry Area */}
