@@ -51,6 +51,26 @@ export default function AuthModal({
 
   const bloodGroups: BloodGroup[] = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
+  // Barishal address dropdown for the signup form (replaces Residential Hall)
+  const barishalAreas = [
+    'Barishal Sadar',
+    'Kawnia',
+    'Rupatoli',
+    'Nathullabad',
+    'Notullabad',
+    'Kashipur',
+    'Amanatganj',
+    'Sagardi',
+    'Alekanda',
+    'Nabogram Road',
+    'Ruiya',
+    'Sadar Road',
+    'Chowmatha',
+    'Bangla Bazar',
+    'Palashpur',
+    'Other Area in Barishal',
+  ];
+
   if (!isOpen) return null;
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -129,24 +149,33 @@ export default function AuthModal({
         <div className="p-6 md:p-8">
           
           {isSubmittedSuccessfully ? (
-            <div className="p-8 text-center flex flex-col items-center justify-center space-y-6">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 animate-in zoom-in-50 duration-300">
-                <Check className="h-12 w-12" />
+            <div className="overflow-hidden rounded-2xl border border-red-500/30 bg-gradient-to-b from-[#FF1E1E] to-[#7f0f0f] p-8 text-center flex flex-col items-center justify-center space-y-4 animate-in zoom-in-95 duration-300">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-[#FF1E1E] shadow-lg animate-in zoom-in-50 duration-300">
+                <Droplet className="h-10 w-10 fill-[#FF1E1E]" />
+              </div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-400 text-white -mt-10 ml-10 relative z-10 border-2 border-white">
+                <Check className="h-5 w-5" />
               </div>
               <div className="text-center">
-                <h2 className="font-display text-2xl font-black text-white">
-                  Registered Successfully!
-                </h2>
-                <p className="text-sm font-semibold text-emerald-400 mt-2">
-                  Campus donor profile live
+                <p className="text-xs font-bold uppercase tracking-widest text-white/80">
+                  Welcome{name ? `, ${name}` : ''}!
                 </p>
-                <p className="text-xs text-gray-400 mt-3 max-w-sm mx-auto leading-relaxed">
-                  Thank you for enrolling in our volunteer donor network. Your life-saving contribution is highly appreciated on campus.
+                <h2 className="font-display text-2xl font-black text-white leading-tight mt-2">
+                  Welcome to Trust University Barishal Campus Blood Donation Network
+                </h2>
+                <p className="text-sm font-semibold text-white/90 mt-3">
+                  Your donor profile is now live
+                </p>
+                <p className="text-xs text-white/80 mt-2 max-w-sm mx-auto leading-relaxed">
+                  Thank you for joining our volunteer donor network. You are now ready to help save lives on campus.
+                </p>
+                <p className="text-[11px] text-white/70 mt-3">
+                  Trust University, Barishal • Ruiya, Nabogram Road, Barishal
                 </p>
               </div>
               <button
                 onClick={handleClose}
-                className="w-full max-w-xs rounded-xl bg-[#FF1E1E] py-3.5 font-display text-xs font-bold uppercase tracking-widest text-white shadow-[0_0_12px_rgba(255,30,30,0.45)] hover:bg-[#ff3c3c] transition-all cursor-pointer"
+                className="w-full max-w-xs rounded-xl bg-white py-3.5 font-display text-xs font-bold uppercase tracking-widest text-[#FF1E1E] shadow-lg hover:bg-gray-100 transition-all cursor-pointer"
               >
                 Go to Dashboard
               </button>
@@ -240,7 +269,7 @@ export default function AuthModal({
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Jane Doe"
+                        placeholder="Rafsan"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
@@ -286,26 +315,29 @@ export default function AuthModal({
                       <input
                         type="text"
                         required
-                        placeholder="e.g. CSE, BBA, Pharmacy"
+                        placeholder="CSE"
                         value={department}
                         onChange={(e) => setDepartment(e.target.value)}
                         className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
                       />
                     </div>
 
-                    {/* 4. Residential Hall */}
+                    {/* 4. Address (Barishal dropdown, replaces Residential Hall) */}
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                        Residential Hall / Dormitory
+                        Address
                       </label>
-                      <input
-                        type="text"
+                      <select
                         required
-                        placeholder="e.g. Sher-e-Bangla Hall, Room 304"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
-                      />
+                      >
+                        <option value="" className="bg-[#0B1220]">Select your area in Barishal</option>
+                        {barishalAreas.map(area => (
+                          <option key={area} value={area} className="bg-[#0B1220]">{area}</option>
+                        ))}
+                      </select>
                     </div>
 
                     {/* 5. Roll (last 2 digits only) */}
@@ -318,7 +350,7 @@ export default function AuthModal({
                         required
                         maxLength={2}
                         pattern="\d{2}"
-                        placeholder="e.g. 42"
+                        placeholder="02"
                         value={roll}
                         onChange={(e) => setRoll(e.target.value.replace(/\D/g, '').substring(0, 2))}
                         className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E] font-mono"
@@ -333,7 +365,7 @@ export default function AuthModal({
                       <input
                         type="text"
                         required
-                        placeholder="e.g. 52nd Batch"
+                        placeholder="9th Batch"
                         value={batch}
                         onChange={(e) => setBatch(e.target.value)}
                         className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
@@ -343,13 +375,12 @@ export default function AuthModal({
                     {/* How many times donated blood */}
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                        Times Donated Blood
+                        Times Donated Blood (Optional)
                       </label>
                       <input
                         type="number"
                         min="0"
-                        required
-                        placeholder="e.g. 4"
+                        placeholder="4"
                         value={donationCount}
                         onChange={(e) => setDonationCount(e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value) || 0))}
                         className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E] font-mono"
@@ -359,7 +390,7 @@ export default function AuthModal({
                     {/* Last Blood Donation Date */}
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                        Last Blood Donation Date
+                        Last Blood Donation Date (Optional)
                       </label>
                       <input
                         type="date"
@@ -407,7 +438,7 @@ export default function AuthModal({
                     disabled={isLoading}
                     className="w-full rounded-xl bg-[#FF1E1E] py-3.5 font-display text-xs font-bold uppercase tracking-widest text-white shadow-lg hover:bg-[#ff3c3c] disabled:opacity-45 transition-colors cursor-pointer"
                   >
-                    {isLoading ? 'Initiating Profile Setup...' : 'Enroll in Donor Network'}
+                    {isLoading ? 'Creating Profile...' : 'Sign Up'}
                   </button>
 
                   <div className="text-center pt-2">

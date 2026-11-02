@@ -393,7 +393,10 @@ async function startServer() {
   app.post("/api/auth/register", async (req, res) => {
     const { name, email, password, phone, bloodGroup, department, hall, lastDonationDate, isAvailable, roll, batch, donationCount, address, district } = req.body;
 
-    if (!name || !email || !password || !phone || !bloodGroup || !department || !hall) {
+    // Signup now sends Address (Barishal area) instead of Residential Hall;
+    // keep hall for older data by falling back to the address value.
+    const effectiveHall = hall || address;
+    if (!name || !email || !password || !phone || !bloodGroup || !department || !effectiveHall) {
       return res.status(400).json({ error: "All profile fields are mandatory." });
     }
 
@@ -432,8 +435,8 @@ async function startServer() {
       phone,
       bloodGroup,
       department,
-      hall,
-      address: address || hall,
+      hall: effectiveHall,
+      address: address || effectiveHall,
       district: district || "Barishal",
       roll: roll || "",
       batch: batch || "",
