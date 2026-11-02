@@ -449,5 +449,19 @@ textarea:focus {
   transform-origin: center center;
 }
 
+/* Urgent-request ticker: seamless leftward scroll, pauses on hover */
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-ticker {
+  animation: ticker-scroll 30s linear infinite;
+}
+
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
 
 

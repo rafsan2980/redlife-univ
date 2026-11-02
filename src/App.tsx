@@ -8,6 +8,8 @@ import AdminDashboard from './components/AdminDashboard';
 import InfoSection from './components/InfoSection';
 import AuthModal from './components/AuthModal';
 import RequestBloodModal from './components/RequestBloodModal';
+import DonationGallery from './components/DonationGallery';
+import RequestTicker from './components/RequestTicker';
 import { api, setAuthToken } from './lib/api';
 import { User, BloodRequest, DonorStats } from './types';
 import { ShieldCheck, Heart, AlertCircle, Droplet, Sparkles, LogIn, Users } from 'lucide-react';
@@ -240,6 +242,18 @@ export default function App() {
         {/* Dynamic Content Panel view based on active Nav tabs */}
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
           
+          {currentTab === 'search' && (
+            <div className="space-y-6 mb-6">
+              <RequestTicker requests={requests} onViewRequests={() => setCurrentTab('requests')} />
+              <DonationGallery
+                onOpenRegister={() => {
+                  setAuthModalView('register');
+                  setAuthModalOpen(true);
+                }}
+              />
+            </div>
+          )}
+
           {currentTab === 'search' && (
             <DonorSearch
               donors={donors}
