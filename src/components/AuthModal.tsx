@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Droplet, Check } from 'lucide-react';
+import { X, Droplet, Check, Heart, Users, ShieldCheck } from 'lucide-react';
 import { BloodGroup } from '../types';
 
 interface AuthModalProps {
@@ -134,7 +134,7 @@ export default function AuthModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050816]/80 p-4 backdrop-blur-md">
       <div 
-        className="relative w-full max-w-lg rounded-3xl border border-white/8 bg-[#0B1220] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-white"
+        className={`relative w-full ${isSubmittedSuccessfully ? 'max-w-3xl' : 'max-w-lg'} rounded-3xl border border-white/8 bg-[#0B1220] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-white`}
         onClick={(e) => e.stopPropagation()}
       >
         
@@ -149,36 +149,87 @@ export default function AuthModal({
         <div className="p-6 md:p-8">
           
           {isSubmittedSuccessfully ? (
-            <div className="overflow-hidden rounded-2xl border border-red-500/30 bg-gradient-to-b from-[#FF1E1E] to-[#7f0f0f] p-8 text-center flex flex-col items-center justify-center space-y-4 animate-in zoom-in-95 duration-300">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-[#FF1E1E] shadow-lg animate-in zoom-in-50 duration-300">
-                <Droplet className="h-10 w-10 fill-[#FF1E1E]" />
-              </div>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-400 text-white -mt-10 ml-10 relative z-10 border-2 border-white">
-                <Check className="h-5 w-5" />
-              </div>
-              <div className="text-center">
-                <p className="text-xs font-bold uppercase tracking-widest text-white/80">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl animate-in zoom-in-95 duration-300">
+              {/* Top red banner: solid red, so white text stays white in both themes */}
+              <div className="bg-[#FF1E1E] px-6 py-5 text-center">
+                <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg">
+                  <Droplet className="h-8 w-8 fill-[#FF1E1E] text-[#FF1E1E]" />
+                  <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white border-2 border-white">
+                    <Check className="h-4 w-4" />
+                  </span>
+                </div>
+                <p className="mt-3 text-xs font-bold uppercase tracking-widest text-white">
                   Welcome{name ? `, ${name}` : ''}!
                 </p>
-                <h2 className="font-display text-2xl font-black text-white leading-tight mt-2">
-                  Welcome to Trust University Barishal Campus Blood Donation Network
-                </h2>
-                <p className="text-sm font-semibold text-white/90 mt-3">
+                <p className="mt-1 text-sm font-semibold text-white">
                   Your donor profile is now live
                 </p>
-                <p className="text-xs text-white/80 mt-2 max-w-sm mx-auto leading-relaxed">
-                  Thank you for joining our volunteer donor network. You are now ready to help save lives on campus.
-                </p>
-                <p className="text-[11px] text-white/70 mt-3">
-                  Trust University, Barishal • Ruiya, Nabogram Road, Barishal
-                </p>
               </div>
-              <button
-                onClick={handleClose}
-                className="w-full max-w-xs rounded-xl bg-white py-3.5 font-display text-xs font-bold uppercase tracking-widest text-[#FF1E1E] shadow-lg hover:bg-gray-100 transition-all cursor-pointer"
-              >
-                Go to Dashboard
-              </button>
+
+              {/* Main welcome area: dark text on white, with a filled side panel */}
+              <div className="grid md:grid-cols-5">
+                <div className="p-6 md:p-8 md:col-span-3 text-left">
+                  <h2 className="font-display text-2xl font-black leading-tight text-[#0B132B]">
+                    Welcome to Trust University Barishal Campus Blood Donation Network
+                  </h2>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                    Thank you for joining our volunteer donor network. You are now ready to help save lives on campus, and your profile will show up for emergency calls.
+                  </p>
+
+                  <div className="mt-5 space-y-3">
+                    <div className="flex items-start gap-3 rounded-xl bg-red-50 p-3">
+                      <Heart className="mt-0.5 h-5 w-5 shrink-0 fill-[#FF1E1E] text-[#FF1E1E]" />
+                      <div>
+                        <p className="text-sm font-bold text-[#0B132B]">Ready for emergencies</p>
+                        <p className="text-xs leading-relaxed text-slate-600">Available donors can be contacted quickly when blood is needed urgently.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-100 p-3">
+                      <Users className="mt-0.5 h-5 w-5 shrink-0 text-[#0B132B]" />
+                      <div>
+                        <p className="text-sm font-bold text-[#0B132B]">Campus network</p>
+                        <p className="text-xs leading-relaxed text-slate-600">Students and faculty of Trust University, Barishal, helping each other.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 rounded-xl bg-emerald-50 p-3">
+                      <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                      <div>
+                        <p className="text-sm font-bold text-[#0B132B]">Verified profile</p>
+                        <p className="text-xs leading-relaxed text-slate-600">You can log in anytime and update your availability.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleClose}
+                    className="mt-6 w-full rounded-xl bg-[#FF1E1E] py-3.5 font-display text-xs font-bold uppercase tracking-widest text-white shadow-lg hover:bg-[#ff3c3c] transition-all cursor-pointer"
+                  >
+                    Go to Dashboard
+                  </button>
+                </div>
+
+                {/* Side panel, so the popup does not look empty on wide screens */}
+                <div className="bg-[#FF1E1E] p-6 md:p-7 md:col-span-2 flex flex-col justify-center text-center">
+                  <Droplet className="mx-auto h-12 w-12 fill-white text-white" />
+                  <p className="mt-4 font-display text-xl font-black leading-tight text-white">
+                    Every Drop Saves a Life
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-white">
+                    One donation can help save more than one life. Your kindness today can give someone a tomorrow.
+                  </p>
+                  <div className="mt-5 border-t border-white pt-4 text-left">
+                    <p className="text-xs font-bold uppercase tracking-widest text-white">
+                      Trust University, Barishal
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-white">
+                      Ruiya, Nabogram Road, Barishal
+                    </p>
+                    <p className="mt-2 text-xs leading-relaxed text-white">
+                      CSE • BBA • Pharmacy • EEE • English
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
             <div>
