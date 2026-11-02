@@ -329,10 +329,9 @@ export default function AdminDashboard({
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  // Easy labels for the request cards, filters and buttons (same values,
-  // only the words shown on screen are simpler).
-  const levelLabel = (level?: string) => level === 'Critical' ? 'Khub Joruri' : level === 'Urgent' ? 'Joruri' : 'Sadharon';
-  const statusLabel = (status: string) => status === 'pending' ? 'Rokto Lagbe' : status === 'fulfilled' ? 'Pawa Geche' : 'Batil';
+  // Labels back to the original English words, as the user preferred.
+  const levelLabel = (level?: string) => level || 'Normal';
+  const statusLabel = (status: string) => status;
   const isNewRequest = (createdAt: string) => {
     const t = new Date(createdAt).getTime();
     return !isNaN(t) && Date.now() - t < 24 * 60 * 60 * 1000;
@@ -831,10 +830,10 @@ export default function AdminDashboard({
                       onChange={(e) => setRequestStatus(e.target.value)}
                       className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-2.5 text-xs font-bold text-white outline-none focus:border-[#FF1E1E]"
                     >
-                      <option value="" className="bg-[#0B1220]">Obostha: Shob</option>
-                      <option value="pending" className="bg-[#0B1220]">Rokto Lagbe</option>
-                      <option value="fulfilled" className="bg-[#0B1220]">Pawa Geche</option>
-                      <option value="cancelled" className="bg-[#0B1220]">Batil</option>
+                      <option value="" className="bg-[#0B1220]">Status: All</option>
+                      <option value="pending" className="bg-[#0B1220]">Pending</option>
+                      <option value="fulfilled" className="bg-[#0B1220]">Fulfilled</option>
+                      <option value="cancelled" className="bg-[#0B1220]">Cancelled</option>
                     </select>
                   </div>
 
@@ -844,18 +843,14 @@ export default function AdminDashboard({
                       onChange={(e) => setRequestLevel(e.target.value)}
                       className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-2.5 text-xs font-bold text-white outline-none focus:border-[#FF1E1E]"
                     >
-                      <option value="" className="bg-[#0B1220]">Level: Shob</option>
-                      <option value="Normal" className="bg-[#0B1220]">Sadharon</option>
-                      <option value="Urgent" className="bg-[#0B1220]">Joruri</option>
-                      <option value="Critical" className="bg-[#0B1220]">Khub Joruri</option>
+                      <option value="" className="bg-[#0B1220]">Level: All</option>
+                      <option value="Normal" className="bg-[#0B1220]">Normal</option>
+                      <option value="Urgent" className="bg-[#0B1220]">Urgent</option>
+                      <option value="Critical" className="bg-[#0B1220]">Critical</option>
                     </select>
                   </div>
                 </div>
               </div>
-
-              <p className="text-xs text-gray-400 font-medium -mt-2 mb-1">
-                Notun request shobar age upore dekhabe. Joruri request lal/holud diye chihnito. Button er mane: <strong className="text-white">Activate Review</strong> = request abar chalu, <strong className="text-white">Mark Saved</strong> = rokto pawa geche, <strong className="text-white">Cancel Appeal</strong> = request batil.
-              </p>
 
               {/* Grid indices of requests */}
               {filteredRequests.length === 0 ? (
