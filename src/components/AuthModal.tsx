@@ -57,7 +57,6 @@ export default function AuthModal({
     'Kawnia',
     'Rupatoli',
     'Nathullabad',
-    'Notullabad',
     'Kashipur',
     'Amanatganj',
     'Sagardi',
