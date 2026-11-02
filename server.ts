@@ -7,6 +7,10 @@ import {
   dbInsertDonor,
   dbUpdateDonor,
   dbDeleteDonor,
+  dbGetNotifications,
+  dbInsertNotifications,
+  dbMarkNotificationRead,
+  getCompatibleDonorGroups,
   seedSupabaseIfNeeded
 } from "./supabaseService.js";
 
@@ -683,7 +687,7 @@ async function startServer() {
   });
 
   // Emergency Requests: Post dynamic request
-  app.post("/api/requests", (req: any, res) => {
+  app.post("/api/requests", async (req: any, res) => {
     let user: any = null;
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -739,26 +743,47 @@ async function startServer() {
 
     db.requests.unshift(newRequest);
 
-    // Dynamic Notifications Triggering Logic (only matching blood group, non-suspended donors)
-    if (!db.notifications) db.notifications = [];
-    const matchingDonors = db.users.filter(u => u.role === "donor" && u.bloodGroup === newRequest.bloodGroup && !u.isSuspended);
-    
-    matchingDonors.forEach(donor => {
-      db.notifications!.unshift({
-        id: "notif-" + Math.random().toString(36).substring(2, 11),
-        donorId: donor.id,
-        patientName: newRequest.patientName,
-        bloodGroupNeeded: newRequest.bloodGroup,
-        hospital: newRequest.hospital,
-        phone: newRequest.phone,
-        emergencyLevel: newRequest.emergencyLevel || "Normal",
-        requiredDate: newRequest.dateNeeded,
-        requiredTime: newRequest.requiredTime || "",
-        message: `URGENT ${newRequest.bloodGroup} blood needed at ${newRequest.hospital}.`,
-        isRead: false,
-        createdAt: newRequest.createdAt
-      });
-    });
+    // Dynamic Notifications Triggering Logic: compatible blood groups,
+    // non-suspended donors. Donors are read from permanent Supabase when
+    // active, so donors registered before a redeploy still get notified;
+    // the local file is only a fallback when Supabase is unavailable.
+    // Notifications are saved to Supabase when its table exists, so they
+    // survive a redeploy, and fall back to the local file otherwise.
+    let donorPool: any[] = db.users;
+    if (isSupabaseActive()) {
+      try {
+        const supabaseDonors = await dbGetDonors();
+        if (supabaseDonors.length > 0) donorPool = supabaseDonors;
+      } catch (err) {
+        console.error("Falling back to local donors for notifications:", err);
+      }
+    }
+    const compatibleGroups = getCompatibleDonorGroups(newRequest.bloodGroup);
+    const matchingDonors = donorPool.filter(u => u.role === "donor" && compatibleGroups.includes(u.bloodGroup) && !u.isSuspended);
+
+    const newNotifications = matchingDonors.map(donor => ({
+      id: "notif-" + Math.random().toString(36).substring(2, 11),
+      donorId: donor.id,
+      patientName: newRequest.patientName,
+      bloodGroupNeeded: newRequest.bloodGroup,
+      hospital: newRequest.hospital,
+      phone: newRequest.phone,
+      emergencyLevel: newRequest.emergencyLevel || "Normal",
+      requiredDate: newRequest.dateNeeded,
+      requiredTime: newRequest.requiredTime || "",
+      message: `URGENT ${newRequest.bloodGroup} blood needed at ${newRequest.hospital}.`,
+      isRead: false,
+      createdAt: newRequest.createdAt
+    }));
+
+    let savedToSupabase = false;
+    if (isSupabaseActive() && newNotifications.length > 0) {
+      savedToSupabase = await dbInsertNotifications(newNotifications);
+    }
+    if (!savedToSupabase) {
+      if (!db.notifications) db.notifications = [];
+      db.notifications!.unshift(...newNotifications);
+    }
 
     // Activities tracking logic
     if (!db.activities) db.activities = [];
@@ -1091,16 +1116,26 @@ async function startServer() {
     res.json(db.activities || []);
   });
 
-  // Notifications: Get all notifications for current donor
-  app.get("/api/notifications", authenticate, (req: any, res) => {
+  // Notifications: Get all notifications for current donor.
+  // Supabase first when active (permanent, survives redeploy);
+  // local file is the fallback when Supabase or its table is unavailable.
+  app.get("/api/notifications", authenticate, async (req: any, res) => {
+    if (isSupabaseActive()) {
+      const supabaseList = await dbGetNotifications(req.user.id);
+      if (supabaseList !== null) return res.json(supabaseList);
+    }
     const db = readDB();
     const list = (db.notifications || []).filter(n => n.donorId === req.user.id);
     res.json(list);
   });
 
-  // Notifications: Mark as read
-  app.put("/api/notifications/:id/read", authenticate, (req: any, res) => {
+  // Notifications: Mark as read (Supabase first, local fallback)
+  app.put("/api/notifications/:id/read", authenticate, async (req: any, res) => {
     const { id } = req.params;
+    if (isSupabaseActive()) {
+      const updated = await dbMarkNotificationRead(id, req.user.id);
+      if (updated) return res.json({ id, isRead: true });
+    }
     const db = readDB();
     if (!db.notifications) db.notifications = [];
     const index = db.notifications.findIndex(n => n.id === id && n.donorId === req.user.id);

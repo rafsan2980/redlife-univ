@@ -259,6 +259,126 @@ export async function dbDeleteDonor(userId: string): Promise<boolean> {
 }
 
 /**
+ * Compatible donor groups for each recipient blood group.
+ * A donor can give to a recipient when the donor's group is in this list.
+ * (O- gives to everyone; AB+ receives from everyone.)
+ */
+export const COMPATIBLE_DONOR_GROUPS: Record<string, string[]> = {
+  "A+": ["A+", "A-", "O+", "O-"],
+  "A-": ["A-", "O-"],
+  "B+": ["B+", "B-", "O+", "O-"],
+  "B-": ["B-", "O-"],
+  "O+": ["O+", "O-"],
+  "O-": ["O-"],
+  "AB+": ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"],
+  "AB-": ["AB-", "A-", "B-", "O-"]
+};
+
+export function getCompatibleDonorGroups(recipientGroup: string): string[] {
+  return COMPATIBLE_DONOR_GROUPS[recipientGroup] || [recipientGroup];
+}
+
+function mapToAppNotification(row: any): any {
+  return {
+    id: row.id,
+    donorId: row.donor_id,
+    patientName: row.patient_name,
+    bloodGroupNeeded: row.blood_group_needed,
+    hospital: row.hospital,
+    phone: row.phone,
+    emergencyLevel: row.emergency_level || "Normal",
+    requiredDate: row.required_date,
+    requiredTime: row.required_time || "",
+    message: row.message,
+    isRead: !!row.is_read,
+    createdAt: row.created_at || new Date().toISOString()
+  };
+}
+
+function mapToSupabaseNotification(n: any): any {
+  return {
+    id: n.id,
+    donor_id: n.donorId,
+    patient_name: n.patientName,
+    blood_group_needed: n.bloodGroupNeeded,
+    hospital: n.hospital,
+    phone: n.phone,
+    emergency_level: n.emergencyLevel || "Normal",
+    required_date: n.requiredDate,
+    required_time: n.requiredTime || "",
+    message: n.message,
+    is_read: !!n.isRead,
+    created_at: n.createdAt || new Date().toISOString()
+  };
+}
+
+/**
+ * Fetch a donor's notifications from permanent Supabase storage.
+ * Returns null when Supabase is unavailable or the notifications table
+ * has not been created yet, so the caller can fall back to local storage.
+ */
+export async function dbGetNotifications(donorId: string): Promise<any[] | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("donor_id", donorId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("Supabase Error getting notifications:", error.message);
+      return null;
+    }
+    return (data || []).map(mapToAppNotification);
+  } catch (error) {
+    console.error("Exception getting notifications from Supabase:", error);
+    return null;
+  }
+}
+
+/** Insert notifications into Supabase. Returns false when it could not save. */
+export async function dbInsertNotifications(notifications: any[]): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase || notifications.length === 0) return false;
+  try {
+    const { error } = await supabase
+      .from("notifications")
+      .insert(notifications.map(mapToSupabaseNotification));
+    if (error) {
+      console.error("Supabase Error inserting notifications:", error.message);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Exception inserting notifications into Supabase:", error);
+    return false;
+  }
+}
+
+/** Mark one notification read in Supabase. Returns false when it could not save. */
+export async function dbMarkNotificationRead(id: string, donorId: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  try {
+    const { data, error } = await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("id", id)
+      .eq("donor_id", donorId)
+      .select();
+    if (error) {
+      console.error("Supabase Error marking notification read:", error.message);
+      return false;
+    }
+    return !!(data && data.length > 0);
+  } catch (error) {
+    console.error("Exception marking notification read in Supabase:", error);
+    return false;
+  }
+}
+
+/**
  * Seeds initial baseline users into Supabase on first startup if empty
  */
 export async function seedSupabaseIfNeeded(initialLocalUsers: any[]): Promise<void> {

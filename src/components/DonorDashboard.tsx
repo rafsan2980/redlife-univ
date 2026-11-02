@@ -229,7 +229,7 @@ export default function DonorDashboard({
                   </span>
                 )}
               </h3>
-              <p className="text-xs text-gray-400 font-medium">Exclusive real-time alerts matching your blood group ({currentUser.bloodGroup})</p>
+              <p className="text-xs text-gray-400 font-medium">Exclusive real-time alerts for your blood group ({currentUser.bloodGroup}) and compatible requests</p>
             </div>
 
             <button 
