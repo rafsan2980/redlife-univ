@@ -854,7 +854,7 @@ export default function AdminDashboard({
               </div>
 
               <p className="text-xs text-gray-400 font-medium -mt-2 mb-1">
-                Notun request shobar age upore dekhabe. Joruri request lal/holud diye chihnito. Button er mane: <strong className="text-white">Abar Kholo</strong> = request abar chalu, <strong className="text-white">Rokto Pawa Geche</strong> = rokto pawa geche, <strong className="text-white">Batil Koro</strong> = request batil.
+                Notun request shobar age upore dekhabe. Joruri request lal/holud diye chihnito. Button er mane: <strong className="text-white">Activate Review</strong> = request abar chalu, <strong className="text-white">Mark Saved</strong> = rokto pawa geche, <strong className="text-white">Cancel Appeal</strong> = request batil.
               </p>
 
               {/* Grid indices of requests */}
@@ -939,26 +939,23 @@ export default function AdminDashboard({
                           <button
                             onClick={() => handleUpdateStatusQuick(req.id, 'pending')}
                             disabled={req.status === 'pending'}
-                            title="Ei request ta abar chalu koro (Rokto Lagbe)"
                             className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/15 text-amber-400 border border-amber-500/20 text-[10px] font-bold rounded cursor-pointer disabled:opacity-25"
                           >
-                            Abar Kholo
+                            Activate Review
                           </button>
                           <button
                             onClick={() => handleUpdateStatusQuick(req.id, 'fulfilled')}
                             disabled={req.status === 'fulfilled'}
-                            title="Rokto pawa geche, request sesh koro"
                             className="px-2.5 py-1 bg-emerald-500/15 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-5–/30 text-[10px] font-bold rounded cursor-pointer disabled:opacity-25"
                           >
-                            Rokto Pawa Geche ✓
+                            Mark Saved ✓
                           </button>
                           <button
                             onClick={() => handleUpdateStatusQuick(req.id, 'cancelled')}
                             disabled={req.status === 'cancelled'}
-                            title="Ei request ta batil koro"
                             className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-gray-400 border border-white/8 text-[10px] font-bold rounded cursor-pointer disabled:opacity-25"
                           >
-                            Batil Koro
+                            Cancel Appeal
                           </button>
                         </div>
 
@@ -968,7 +965,7 @@ export default function AdminDashboard({
                             className="flex h-8 px-2.5 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 border border-white/8 text-[10px] font-bold cursor-pointer transition-colors"
                           >
                             <Edit className="h-3 w-3 mr-1 text-[#FF1E1E]" />
-                            Thik Koro
+                            Edit details
                           </button>
                         </div>
                       </div>
