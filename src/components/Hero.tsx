@@ -125,7 +125,7 @@ export default function Hero({
             animate="visible"
             className="font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl text-balance relative z-10 py-3 flex flex-wrap justify-center items-center gap-x-2 sm:gap-x-3.5"
           >
-            <motion.span variants={wordVariants} className="inline-block">
+            <motion.span variants={wordVariants} className="inline-block hero-word">
               University
             </motion.span>
             
@@ -143,7 +143,7 @@ export default function Hero({
               <span className="shining-text">Donation</span>
             </motion.span>
 
-            <motion.span variants={wordVariants} className="inline-block">
+            <motion.span variants={wordVariants} className="inline-block hero-word">
               Network
             </motion.span>
           </motion.h1>
@@ -165,7 +165,7 @@ export default function Hero({
           </button>
           <button
             onClick={onOpenRegister}
-            className="rounded-xl border border-white/10 bg-[#0B1220] px-6 py-3.5 font-display text-sm font-bold text-gray-200 transition-all duration-200 hover:bg-white/5 hover:border-[#FF1E1E]/30 hover:shadow-[0_0_15px_rgba(255,30,30,0.1)] cursor-pointer"
+            className="rounded-xl border border-[#F59E0B] bg-[#F59E0B] px-6 py-3.5 font-display text-sm font-bold text-[#0B132B] transition-all duration-200 hover:bg-[#FBBF24] cursor-pointer"
           >
             Become a Donor
           </button>
@@ -178,7 +178,7 @@ export default function Hero({
           <div className="group relative overflow-hidden rounded-2xl border border-white/8 bg-[#0B1220] p-5 text-left shadow-sm transition-all duration-250 hover:-translate-y-1 hover:border-[#FF1E1E]/30 hover:shadow-[0_0_20px_rgba(255,30,30,0.15)]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Registered Donors</span>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF1E1E]/10 text-[#FF1E1E] transition-colors group-hover:bg-[#FF1E1E]/20">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0F5A3A]/10 text-[#0F5A3A] transition-colors group-hover:bg-[#0F5A3A]/20">
                 <Users className="h-5 w-5" />
               </div>
             </div>
@@ -220,7 +220,7 @@ export default function Hero({
           <div className="group relative overflow-hidden rounded-2xl border border-white/8 bg-[#0B1220] p-5 text-left shadow-sm transition-all duration-250 hover:-translate-y-1 hover:border-[#FF1E1E]/30 hover:shadow-[0_0_20px_rgba(255,30,30,0.15)]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Total Lives Linked</span>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF1E1E] text-white shadow-[0_0_10px_rgba(255,30,30,0.3)] transition-colors group-hover:bg-[#ff3c3c]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0F5A3A] text-white shadow-[0_0_10px_rgba(15,90,58,0.3)] transition-colors group-hover:bg-[#14532D]">
                 <CheckCircle className="h-5 w-5" />
               </div>
             </div>

@@ -310,7 +310,7 @@ export default function App() {
       </main>
 
       {/* Modern, Polished Footer */}
-      <footer className="border-t border-white/8 bg-[#0B1220]/80 backdrop-blur-md py-8 text-center text-xs font-semibold text-gray-400">
+      <footer className="border-t-2 border-[#F59E0B] bg-[#0F5A3A] backdrop-blur-md py-8 text-center text-xs font-semibold text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center space-x-2">
             <Droplet className="h-4.5 w-4.5 text-[#FF1E1E] fill-[#FF1E1E]" />

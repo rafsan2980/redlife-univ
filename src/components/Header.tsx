@@ -44,7 +44,7 @@ export default function Header({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/8 bg-[#050816]/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b-2 border-[#F59E0B] bg-[#0F5A3A] backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-2.5 sm:px-6 lg:px-8">
         
         {/* Brand Logo */}
@@ -77,7 +77,7 @@ export default function Header({
           </div>
           <div className="leading-none select-none">
             <span className="font-display text-xs min-[350px]:text-sm sm:text-lg md:text-xl font-extrabold tracking-tight text-white">
-              RedLife <span className="text-[#FF1E1E] drop-shadow-[0_0_8px_rgba(255,30,30,0.5)]">Univ</span>
+              RedLife <span className="text-[#FBBF24]">Univ</span>
             </span>
             <p className="hidden text-[10px] font-semibold tracking-wider uppercase text-gray-400 md:block">
               Campus Donor Network
@@ -93,8 +93,8 @@ export default function Header({
               onClick={() => handleTabChange(item.id)}
               className={`rounded-lg px-4 py-2 font-display text-sm font-semibold transition-all duration-250 ${
                 currentTab === item.id
-                  ? 'bg-[#FF1E1E]/20 text-[#FF1E1E] border border-[#FF1E1E]/30 shadow-[0_0_15px_rgba(255,30,30,0.15)]'
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-white text-[#0F5A3A] border border-white shadow-sm'
+                  : 'text-white hover:bg-[#14532D] hover:text-white'
               }`}
             >
               {item.label}
@@ -163,7 +163,7 @@ export default function Header({
               </button>
               <button
                 onClick={() => onOpenAuth('register')}
-                className="rounded-lg border border-[#FF1E1E]/30 bg-[#FF1E1E]/10 px-3 py-2 font-display text-xs font-bold uppercase tracking-wider text-[#FF1E1E] transition-all hover:bg-[#FF1E1E]/20 hover:border-[#FF1E1E]/50"
+                className="rounded-lg border border-[#F59E0B] bg-[#F59E0B] px-3 py-2 font-display text-xs font-bold uppercase tracking-wider text-[#0B132B] transition-all hover:bg-[#FBBF24]"
               >
                 Register
               </button>
@@ -205,7 +205,7 @@ export default function Header({
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="border-t border-white/8 bg-[#0B1220] px-4 py-3 shadow-xl md:hidden">
+        <div className="border-t border-[#F59E0B] bg-[#0F5A3A] px-4 py-3 shadow-xl md:hidden">
           <div className="space-y-1">
             {navItems.map((item) => (
               <button
@@ -213,8 +213,8 @@ export default function Header({
                 onClick={() => handleTabChange(item.id)}
                 className={`block w-full rounded-lg px-4 py-2.5 text-left font-display text-sm font-semibold transition-all ${
                   currentTab === item.id
-                    ? 'bg-[#FF1E1E]/20 text-[#FF1E1E] border border-[#FF1E1E]/30'
-                    : 'text-gray-300 hover:bg-white/5'
+                    ? 'bg-white text-[#0F5A3A] border border-white'
+                    : 'text-white hover:bg-[#14532D]'
                 }`}
               >
                 {item.label}

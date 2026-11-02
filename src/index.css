@@ -7,9 +7,11 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Custom CSS Variables - :root defines Light Mode by default */
+/* Custom CSS Variables - :root defines Light Mode by default.
+   Trust-inspired light theme: soft green-tinted background, deep green
+   header/footer, red kept only for blood actions, gold for secondary buttons. */
 :root {
-  --bg-body: #F4F6FB;
+  --bg-body: #EDF5ED;
   --bg-card: #FFFFFF;
   --bg-card-secondary: #F8FAFC;
   --text-main: #0B132B;
@@ -149,13 +151,18 @@ textarea:focus {
 }
 
 :root:not(.premium-dark):not(.dark) body {
-  background-color: #F4F6FB !important;
+  background-color: #EDF5ED !important;
   color: #0B132B !important;
 }
 
 :root:not(.premium-dark):not(.dark) #app_root {
-  background-color: #F4F6FB !important;
+  background-color: #EDF5ED !important;
   background-image: none !important;
+}
+
+/* Trust-inspired hero words: deep green in light mode, white in dark mode */
+:root:not(.premium-dark):not(.dark) .hero-word {
+  color: #0F5A3A !important;
 }
 
 :root:not(.premium-dark):not(.dark) .bg-\[\#050816\],
@@ -185,7 +192,7 @@ textarea:focus {
 /* Overwrite background gradients on sections to keep it clean */
 :root:not(.premium-dark):not(.dark) .bg-gradient-to-b {
   background-image: none !important;
-  background-color: #F4F6FB !important;
+  background-color: #EAF3EA !important;
 }
 
 /* Map default glass overlays to soft white in light mode */
@@ -241,7 +248,13 @@ textarea:focus {
   color: #0B132B !important;
 }
 
-/* Exceptions: Items with dark BG must stay text white, including red elements, greens, and ambers */
+/* Exceptions: Items with dark BG must stay text white, including red elements, greens, and ambers.
+   Deep Trust green header/footer/side panels are added here so white text
+   on green stays white in light mode (it would otherwise be forced dark). */
+:root:not(.premium-dark):not(.dark) .bg-\[\#0F5A3A\],
+:root:not(.premium-dark):not(.dark) .bg-\[\#0F5A3A\] *,
+:root:not(.premium-dark):not(.dark) .bg-\[\#14532D\],
+:root:not(.premium-dark):not(.dark) .bg-\[\#14532D\] *,
 :root:not(.premium-dark):not(.dark) .bg-\[\#FF1E1E\],
 :root:not(.premium-dark):not(.dark) .bg-\[\#FF1E1E\] *,
 :root:not(.premium-dark):not(.dark) .bg-red-650,
