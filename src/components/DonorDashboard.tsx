@@ -41,6 +41,7 @@ export default function DonorDashboard({
   // Profiles settings form states
   const [name, setName] = useState(currentUser.name);
   const [phone, setPhone] = useState(currentUser.phone);
+  const [email, setEmail] = useState(/^\d+@univ\.edu$/i.test(currentUser.email || '') ? '' : (currentUser.email || ''));
   const [bloodGroup, setBloodGroup] = useState<BloodGroup>(currentUser.bloodGroup);
   const [department, setDepartment] = useState(currentUser.department);
   const [hall, setHall] = useState(currentUser.hall);
@@ -96,6 +97,7 @@ export default function DonorDashboard({
       await onUpdateProfile({
         name,
         phone,
+        ...(email.trim() ? { email: email.trim().toLowerCase() } : {}),
         bloodGroup,
         department,
         hall,
@@ -405,6 +407,20 @@ export default function DonorDashboard({
                   onChange={(e) => setPhone(e.target.value)}
                   className="h-10.5 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-sm font-medium text-white outline-none focus:border-[#FF1E1E] font-mono"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-extrabold uppercase tracking-wide text-gray-400 mb-2">
+                  Email (for password reset)
+                </label>
+                <input
+                  type="email"
+                  placeholder="example@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-10.5 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-sm font-medium text-white outline-none focus:border-[#FF1E1E]"
+                />
+                <p className="mt-1 text-[10px] text-gray-500">Password reset code ei email e jabe.</p>
               </div>
 
               <div>

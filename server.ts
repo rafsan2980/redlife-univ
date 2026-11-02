@@ -1,6 +1,8 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
 import {
   isSupabaseActive,
   dbGetDonors,
@@ -11,6 +13,9 @@ import {
   dbGetAllNotifications,
   dbInsertNotifications,
   dbMarkNotificationRead,
+  dbInsertPasswordReset,
+  dbGetLatestPasswordReset,
+  dbUpdatePasswordReset,
   getCompatibleDonorGroups,
   seedSupabaseIfNeeded
 } from "./supabaseService.js";
@@ -82,11 +87,22 @@ interface LiveActivity {
   createdAt: string;
 }
 
+interface DBPasswordReset {
+  id: string;
+  userId: string;
+  codeHash: string;
+  expiresAt: string;
+  attempts: number;
+  used: boolean;
+  createdAt: string;
+}
+
 interface DB {
   users: DBUser[];
   requests: DBRequest[];
   notifications?: DBNotification[];
   activities?: LiveActivity[];
+  passwordResets?: DBPasswordReset[];
 }
 
 const DB_FILE = path.join(process.cwd(), "db.json");
@@ -325,6 +341,53 @@ function writeDB(data: DB) {
   }
 }
 
+// Password hashing with Node's built-in scrypt (no native dependency).
+// Legacy plain-text passwords still verify, and are upgraded to a hash
+// on the next successful login. Format: scrypt:<salt>:<hash>
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `scrypt:${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  if (!stored) return false;
+  if (stored.startsWith("scrypt:")) {
+    const [, salt, hash] = stored.split(":");
+    if (!salt || !hash) return false;
+    const derived = crypto.scryptSync(password, salt, 64);
+    const expected = Buffer.from(hash, "hex");
+    return derived.length === expected.length && crypto.timingSafeEqual(derived, expected);
+  }
+  return password === stored;
+}
+
+// Signup generates phone@univ.edu when no real email is given. Only a
+// real email (not that generated pattern) can receive a reset code.
+function isRealEmail(email?: string): boolean {
+  if (!email || !email.includes("@")) return false;
+  return !/^\d+@univ\.edu$/i.test(email.trim());
+}
+
+function isEmailConfigured(): boolean {
+  return !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
+async function sendResetCodeEmail(to: string, code: string): Promise<void> {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+  });
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to,
+    subject: "RedLife - Password Reset Code",
+    text: `Your RedLife password reset code is: ${code}\n\nThis code is valid for 10 minutes and can be used only once. Do not share it with anyone.\n\nIf you did not request this, please ignore this email.`
+  });
+}
+
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
@@ -436,7 +499,7 @@ async function startServer() {
       id: "user-" + Math.random().toString(36).substring(2, 11),
       name,
       email: email.toLowerCase(),
-      passwordHash: password, // Plain text for sandbox simplicity & robustness
+      passwordHash: hashPassword(password),
       phone,
       bloodGroup,
       department,
@@ -490,18 +553,16 @@ async function startServer() {
     }
 
     const db = readDB();
-    let user = db.users.find(u => 
-      (u.email.toLowerCase() === identifier.toLowerCase() || u.phone === identifier) && 
-      u.passwordHash === password
+    let user = db.users.find(u =>
+      u.email.toLowerCase() === identifier.toLowerCase() || u.phone === identifier
     );
 
-    // If candidate isn't in memory/backup DB under that password, let's query Supabase
+    // If candidate isn't in memory/backup DB, let's query Supabase
     if (!user && isSupabaseActive()) {
       try {
         const supabaseDonors = await dbGetDonors();
-        const found = supabaseDonors.find(u => 
-          (u.email.toLowerCase() === identifier.toLowerCase() || u.phone === identifier) &&
-          u.passwordHash === password
+        const found = supabaseDonors.find(u =>
+          u.email.toLowerCase() === identifier.toLowerCase() || u.phone === identifier
         );
         if (found) {
           user = found;
@@ -517,8 +578,19 @@ async function startServer() {
       }
     }
 
-    if (!user) {
+    if (!user || !verifyPassword(password, user.passwordHash)) {
       return res.status(401).json({ error: "Invalid login credentials. Please double check or try 'admin@univ.edu' & 'admin123' for immediate exploration." });
+    }
+
+    // Upgrade a legacy plain-text password to a hash on successful login.
+    if (!user.passwordHash.startsWith("scrypt:")) {
+      const hashed = hashPassword(password);
+      const localIndex = db.users.findIndex(u => u.id === user.id);
+      if (localIndex !== -1) db.users[localIndex].passwordHash = hashed;
+      user = { ...user, passwordHash: hashed };
+      if (isSupabaseActive()) {
+        try { await dbUpdateDonor(user.id, { passwordHash: hashed }); } catch { /* local copy is enough */ }
+      }
     }
 
     if (user.isSuspended) {
@@ -550,7 +622,7 @@ async function startServer() {
 
   // Auth: Update profile of logged-in user
   app.put("/api/auth/me", authenticate, async (req: any, res) => {
-    const { name, phone, lastDonationDate, isAvailable, department, hall, bloodGroup, roll, batch, donationCount, address, district } = req.body;
+    const { name, phone, email, lastDonationDate, isAvailable, department, hall, bloodGroup, roll, batch, donationCount, address, district } = req.body;
     const db = readDB();
     const userIndex = db.users.findIndex(u => u.id === req.user.id);
 
@@ -558,10 +630,31 @@ async function startServer() {
       return res.status(404).json({ error: "User profile not found." });
     }
 
+    // A real email is how password reset works; it must not belong to
+    // another account, and a generated phone@univ.edu address is not a
+    // real email, so it is not accepted here as a reset address.
+    const newEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    if (newEmail) {
+      if (!isRealEmail(newEmail)) {
+        return res.status(400).json({ error: "Please enter a real email address for password reset." });
+      }
+      const emailTakenLocal = db.users.some(u => u.id !== req.user.id && u.email.toLowerCase() === newEmail);
+      let emailTaken = emailTakenLocal;
+      if (isSupabaseActive() && !emailTaken) {
+        try {
+          const supabaseDonors = await dbGetDonors();
+          emailTaken = supabaseDonors.some(u => u.id !== req.user.id && u.email && u.email.toLowerCase() === newEmail);
+        } catch { /* fall through to local check */ }
+      }
+      if (emailTaken) {
+        return res.status(400).json({ error: "This email is already used by another account." });
+      }
+    }
+
     if (isSupabaseActive()) {
       try {
         await dbUpdateDonor(req.user.id, {
-          name, phone, lastDonationDate, isAvailable, department, hall, bloodGroup, roll, batch, donationCount, address, district
+          name, phone, email: newEmail || undefined, lastDonationDate, isAvailable, department, hall, bloodGroup, roll, batch, donationCount, address, district
         });
       } catch (err) {
         console.error("Failed to update user profile in Supabase:", err);
@@ -573,6 +666,7 @@ async function startServer() {
     db.users[userIndex] = {
       ...existingUser,
       name: name || existingUser.name,
+      email: newEmail || existingUser.email,
       phone: phone || existingUser.phone,
       lastDonationDate: lastDonationDate !== undefined ? lastDonationDate : existingUser.lastDonationDate,
       isAvailable: isAvailable !== undefined ? isAvailable : existingUser.isAvailable,
@@ -590,6 +684,145 @@ async function startServer() {
 
     const { passwordHash, ...safeUser } = db.users[userIndex];
     res.json({ user: safeUser });
+  });
+
+  // Forgot password: send a 6-digit code to the user's REAL email.
+  // Always returns the same message, whether or not the account exists
+  // or has a real email, so nobody can probe which accounts exist.
+  // Simple in-memory throttle: at most one code per identifier per minute.
+  const forgotThrottle = new Map<string, number>();
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    const { identifier } = req.body;
+    if (!identifier) {
+      return res.status(400).json({ error: "Please enter your phone number or email." });
+    }
+    const key = String(identifier).toLowerCase();
+    const last = forgotThrottle.get(key) || 0;
+    if (Date.now() - last < 60 * 1000) {
+      return res.status(429).json({ error: "Please wait a minute before requesting another code." });
+    }
+    forgotThrottle.set(key, Date.now());
+
+    const db = readDB();
+    let user = db.users.find(u => u.email.toLowerCase() === key || u.phone === key);
+    if (!user && isSupabaseActive()) {
+      try {
+        const supabaseDonors = await dbGetDonors();
+        user = supabaseDonors.find(u => u.email.toLowerCase() === key || u.phone === key);
+      } catch { /* fall through to generic message */ }
+    }
+
+    // No real email, or email service not set up yet: do not pretend a
+    // code was sent. The message is the same for every case except this
+    // setup problem, which the admin must fix in Render environment vars.
+    if (!user || !isRealEmail(user.email)) {
+      return res.json({ message: "If an account with a real email exists, a reset code has been sent to that email." });
+    }
+    if (!isEmailConfigured()) {
+      return res.status(503).json({ error: "Email service is not set up yet. Please contact the admin." });
+    }
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const reset: DBPasswordReset = {
+      id: "reset-" + Math.random().toString(36).substring(2, 11),
+      userId: user.id,
+      codeHash: hashPassword(code),
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      attempts: 0,
+      used: false,
+      createdAt: new Date().toISOString()
+    };
+
+    let saved = false;
+    if (isSupabaseActive()) {
+      saved = await dbInsertPasswordReset(reset);
+    }
+    if (!saved) {
+      if (!db.passwordResets) db.passwordResets = [];
+      db.passwordResets.push(reset);
+      writeDB(db);
+    }
+
+    try {
+      await sendResetCodeEmail(user.email, code);
+    } catch (err) {
+      console.error("Failed to send reset code email:", err);
+      // Do not leave an unsent code valid: the user never received it.
+      if (saved) {
+        await dbUpdatePasswordReset(reset.id, { used: true });
+      } else {
+        db.passwordResets = (db.passwordResets || []).filter(r => r.id !== reset.id);
+        writeDB(db);
+      }
+      return res.status(503).json({ error: "Could not send the reset email. Please try again later." });
+    }
+    return res.json({ message: "If an account with a real email exists, a reset code has been sent to that email." });
+  });
+
+  // Reset password with the emailed code. Code: 10 minutes, one use,
+  // max 5 wrong attempts. Never reveals whether the code or the
+  // account was wrong, only that the code is invalid or expired.
+  app.post("/api/auth/reset-password", async (req, res) => {
+    const { identifier, code, newPassword } = req.body;
+    if (!identifier || !code || !newPassword) {
+      return res.status(400).json({ error: "Please enter the code and a new password." });
+    }
+    if (String(newPassword).length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters." });
+    }
+    const key = String(identifier).toLowerCase();
+    const db = readDB();
+    let user = db.users.find(u => u.email.toLowerCase() === key || u.phone === key);
+    if (!user && isSupabaseActive()) {
+      try {
+        const supabaseDonors = await dbGetDonors();
+        user = supabaseDonors.find(u => u.email.toLowerCase() === key || u.phone === key);
+      } catch { /* generic error below */ }
+    }
+    if (!user) {
+      return res.status(400).json({ error: "Invalid or expired code." });
+    }
+
+    let reset: any = null;
+    let resetInSupabase = false;
+    if (isSupabaseActive()) {
+      reset = await dbGetLatestPasswordReset(user.id);
+      resetInSupabase = reset !== null;
+    }
+    if (!reset) {
+      const local = (db.passwordResets || []).filter(r => r.userId === user.id && !r.used);
+      local.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      reset = local[0] || null;
+    }
+    if (!reset || reset.used || reset.attempts >= 5 || new Date(reset.expiresAt).getTime() < Date.now()) {
+      return res.status(400).json({ error: "Invalid or expired code." });
+    }
+    if (!verifyPassword(String(code), reset.codeHash)) {
+      const attempts = reset.attempts + 1;
+      if (resetInSupabase) {
+        await dbUpdatePasswordReset(reset.id, { attempts });
+      } else {
+        const idx = (db.passwordResets || []).findIndex(r => r.id === reset.id);
+        if (idx !== -1) db.passwordResets![idx].attempts = attempts;
+        writeDB(db);
+      }
+      return res.status(400).json({ error: "Invalid or expired code." });
+    }
+
+    const hashed = hashPassword(String(newPassword));
+    if (resetInSupabase) {
+      await dbUpdatePasswordReset(reset.id, { used: true });
+    } else {
+      const idx = (db.passwordResets || []).findIndex(r => r.id === reset.id);
+      if (idx !== -1) db.passwordResets![idx].used = true;
+    }
+    const localIndex = db.users.findIndex(u => u.id === user.id);
+    if (localIndex !== -1) db.users[localIndex].passwordHash = hashed;
+    writeDB(db);
+    if (isSupabaseActive()) {
+      try { await dbUpdateDonor(user.id, { passwordHash: hashed }); } catch { /* local copy updated */ }
+    }
+    return res.json({ message: "Password changed successfully. Please log in with your new password." });
   });
 
   // Donors: Public donor search & statistics

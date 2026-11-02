@@ -92,3 +92,40 @@ drop policy if exists "Public delete notifications" on public.notifications;
 create policy "Public delete notifications"
   on public.notifications for delete
   using (true);
+
+-- Password reset codes: one row per forgot-password request.
+-- Only the code HASH is stored (scrypt format, same as passwords),
+-- never the plain code. Codes expire after 10 minutes, can be used
+-- once, and are locked after 5 wrong attempts.
+create table if not exists public.password_resets (
+  id text primary key,
+  user_id text not null,
+  code_hash text not null,
+  expires_at timestamptz not null,
+  attempts integer default 0,
+  used boolean default false,
+  created_at timestamptz default now()
+);
+
+alter table public.password_resets enable row level security;
+
+drop policy if exists "Public read password_resets" on public.password_resets;
+create policy "Public read password_resets"
+  on public.password_resets for select
+  using (true);
+
+drop policy if exists "Public insert password_resets" on public.password_resets;
+create policy "Public insert password_resets"
+  on public.password_resets for insert
+  with check (true);
+
+drop policy if exists "Public update password_resets" on public.password_resets;
+create policy "Public update password_resets"
+  on public.password_resets for update
+  using (true)
+  with check (true);
+
+drop policy if exists "Public delete password_resets" on public.password_resets;
+create policy "Public delete password_resets"
+  on public.password_resets for delete
+  using (true);

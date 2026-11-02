@@ -403,6 +403,84 @@ export async function dbMarkNotificationRead(id: string, donorId: string): Promi
 }
 
 /**
+ * Password reset codes, stored permanently in Supabase so they survive a
+ * redeploy. Returns null when Supabase or the table is unavailable, so
+ * the caller can fall back to the local file. Code hashes use the same
+ * scrypt format as passwords; the plain code is never stored.
+ */
+export async function dbInsertPasswordReset(reset: any): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from("password_resets").insert([{
+      id: reset.id,
+      user_id: reset.userId,
+      code_hash: reset.codeHash,
+      expires_at: reset.expiresAt,
+      attempts: reset.attempts || 0,
+      used: !!reset.used,
+      created_at: reset.createdAt
+    }]);
+    if (error) {
+      console.error("Supabase Error inserting password reset:", error.message);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Exception inserting password reset into Supabase:", error);
+    return false;
+  }
+}
+
+export async function dbGetLatestPasswordReset(userId: string): Promise<any | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("password_resets")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("used", false)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) {
+      console.error("Supabase Error getting password reset:", error.message);
+      return null;
+    }
+    if (!data || data.length === 0) return null;
+    const row = data[0];
+    return {
+      id: row.id,
+      userId: row.user_id,
+      codeHash: row.code_hash,
+      expiresAt: row.expires_at,
+      attempts: row.attempts || 0,
+      used: !!row.used,
+      createdAt: row.created_at
+    };
+  } catch (error) {
+    console.error("Exception getting password reset from Supabase:", error);
+    return null;
+  }
+}
+
+export async function dbUpdatePasswordReset(id: string, updates: { attempts?: number; used?: boolean }): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from("password_resets").update(updates).eq("id", id);
+    if (error) {
+      console.error("Supabase Error updating password reset:", error.message);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Exception updating password reset in Supabase:", error);
+    return false;
+  }
+}
+
+/**
  * Seeds initial baseline users into Supabase on first startup if empty
  */
 export async function seedSupabaseIfNeeded(initialLocalUsers: any[]): Promise<void> {

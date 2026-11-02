@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Droplet, Check, Heart, Users, ShieldCheck } from 'lucide-react';
 import { BloodGroup } from '../types';
+import { api } from '../lib/api';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -20,17 +21,20 @@ export default function AuthModal({
   apiLogin,
 }: AuthModalProps) {
   // Active inner view state
-  const [view, setView] = useState<'login' | 'register'>(initialView);
+  const [view, setView] = useState<'login' | 'register' | 'forgot'>(initialView);
 
   // Sync state with open/close views
   React.useEffect(() => {
     setView(initialView);
     setErrorMsg('');
+    setForgotStep(1);
+    setForgotMsg('');
   }, [initialView, isOpen]);
 
   // Registration States
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [realEmail, setRealEmail] = useState('');
   const [address, setAddress] = useState('');
   const [department, setDepartment] = useState('');
   const [roll, setRoll] = useState('');
@@ -44,6 +48,14 @@ export default function AuthModal({
   // Login States
   const [loginPhone, setLoginPhone] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+
+  // Forgot Password States (3 steps: identifier -> code -> new password)
+  const [forgotIdentifier, setForgotIdentifier] = useState('');
+  const [forgotCode, setForgotCode] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [forgotStep, setForgotStep] = useState(1);
+  const [forgotMsg, setForgotMsg] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -87,7 +99,9 @@ export default function AuthModal({
     try {
       const data = await apiRegister({
         name,
-        email: `${phone}@univ.edu`, // Programmatic email since input is removed
+        // Real email when given (needed for password reset); otherwise
+        // keep the old generated phone@univ.edu fallback.
+        email: realEmail.trim() ? realEmail.trim().toLowerCase() : `${phone}@univ.edu`,
         phone,
         bloodGroup,
         department,
@@ -128,6 +142,45 @@ export default function AuthModal({
   const handleClose = () => {
     setIsSubmittedSuccessfully(false);
     onClose();
+  };
+
+  const handleForgotSendCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMsg('');
+    setForgotMsg('');
+    try {
+      const data = await api.forgotPassword(forgotIdentifier.trim());
+      setForgotMsg(data.message || 'Code sent. Please check your email.');
+      setForgotStep(2);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Could not send the code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    if (forgotNewPassword.length < 6) {
+      setErrorMsg('New password must be at least 6 characters.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setErrorMsg('New passwords do not match.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const data = await api.resetPassword(forgotIdentifier.trim(), forgotCode.trim(), forgotNewPassword);
+      setForgotMsg(data.message || 'Password changed successfully.');
+      setForgotStep(3);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Invalid or expired code.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -238,7 +291,7 @@ export default function AuthModal({
                   <Droplet className="h-6 w-6 fill-white" />
                 </div>
                 <h2 className="mt-4 font-display text-xl font-extrabold text-white">
-                  {view === 'login' ? 'Log In to Network' : 'Register as a Donor'}
+                  {view === 'login' ? 'Log In to Network' : view === 'forgot' ? 'Forgot Password' : 'Register as a Donor'}
                 </h2>
                 <p className="text-xs text-gray-450 text-gray-400 mt-1">
                   {view === 'login' 
@@ -293,6 +346,16 @@ export default function AuthModal({
                     {isLoading ? 'Verifying Credentials...' : 'Log In'}
                   </button>
 
+                  <div className="text-center pt-1">
+                    <button
+                      type="button"
+                      onClick={() => { setView('forgot'); setErrorMsg(''); setForgotMsg(''); setForgotStep(1); setForgotIdentifier(loginPhone); }}
+                      className="text-xs font-bold text-[#FF1E1E] hover:underline cursor-pointer"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+
                   <div className="text-center pt-2">
                     <p className="text-xs text-gray-400">
                       Don't have a donor profile?{' '}
@@ -306,6 +369,121 @@ export default function AuthModal({
                     </p>
                   </div>
                 </form>
+              ) : view === 'forgot' ? (
+                /* Forgot Password: Step 1 send code, Step 2 code + new password, Step 3 done */
+                <div className="space-y-4 text-left">
+                  {forgotMsg && (
+                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs font-semibold text-emerald-400 p-3.5 leading-normal">
+                      {forgotMsg}
+                    </div>
+                  )}
+                  {forgotStep === 1 && (
+                    <form onSubmit={handleForgotSendCode} className="space-y-4 text-left">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                          Phone Number or Email
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="01XXXXXXXXX or your email"
+                          value={forgotIdentifier}
+                          onChange={(e) => setForgotIdentifier(e.target.value)}
+                          className="h-11 w-full rounded-xl border border-white/8 bg-[#111827] px-3.5 text-xs font-medium text-white outline-none focus:border-[#FF1E1E] font-mono"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-400 leading-relaxed">Reset code ta tomar profile e deya ashol email e jabe. Code 10 minute valid thakbe.</p>
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full rounded-xl bg-[#FF1E1E] py-3.5 font-display text-xs font-bold uppercase tracking-widest text-white shadow-[0_0_12px_rgba(255,30,30,0.45)] hover:bg-[#ff3c3c] disabled:opacity-45 transition-colors cursor-pointer mt-2"
+                      >
+                        {isLoading ? 'Sending Code...' : 'Send Reset Code'}
+                      </button>
+                    </form>
+                  )}
+                  {forgotStep === 2 && (
+                    <form onSubmit={handleForgotReset} className="space-y-4 text-left">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                          6-Digit Code from Email
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          maxLength={6}
+                          placeholder="123456"
+                          value={forgotCode}
+                          onChange={(e) => setForgotCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
+                          className="h-11 w-full rounded-xl border border-white/8 bg-[#111827] px-3.5 text-xs font-medium text-white outline-none focus:border-[#FF1E1E] font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                          New Password
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          placeholder="At least 6 characters"
+                          value={forgotNewPassword}
+                          onChange={(e) => setForgotNewPassword(e.target.value)}
+                          className="h-11 w-full rounded-xl border border-white/8 bg-[#111827] px-3.5 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                          Confirm New Password
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          placeholder="Repeat new password"
+                          value={forgotConfirmPassword}
+                          onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                          className="h-11 w-full rounded-xl border border-white/8 bg-[#111827] px-3.5 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full rounded-xl bg-[#FF1E1E] py-3.5 font-display text-xs font-bold uppercase tracking-widest text-white shadow-[0_0_12px_rgba(255,30,30,0.45)] hover:bg-[#ff3c3c] disabled:opacity-45 transition-colors cursor-pointer mt-2"
+                      >
+                        {isLoading ? 'Changing Password...' : 'Set New Password'}
+                      </button>
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => setForgotStep(1)}
+                          className="text-xs font-bold text-gray-400 hover:underline cursor-pointer"
+                        >
+                          Send code again
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                  {forgotStep === 3 && (
+                    <div className="text-center space-y-4">
+                      <p className="text-sm font-bold text-white">Password changed! Now log in with your new password.</p>
+                      <button
+                        type="button"
+                        onClick={() => { setView('login'); setErrorMsg(''); }}
+                        className="w-full rounded-xl bg-[#FF1E1E] py-3.5 font-display text-xs font-bold uppercase tracking-widest text-white hover:bg-[#ff3c3c] transition-colors cursor-pointer"
+                      >
+                        Back to Log In
+                      </button>
+                    </div>
+                  )}
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => { setView('login'); setErrorMsg(''); }}
+                      className="text-xs font-bold text-gray-400 hover:underline cursor-pointer"
+                    >
+                      Back to Log In
+                    </button>
+                  </div>
+                </div>
               ) : (
                 /* Register Form Layout */
                 <form onSubmit={handleRegister} className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-left custom-scrollbar scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
@@ -339,6 +517,21 @@ export default function AuthModal({
                         onChange={(e) => setPhone(e.target.value)}
                         className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E] font-mono"
                       />
+                    </div>
+
+                    {/* Email (optional, for password reset) */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                        Email (Optional - for password reset)
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="example@gmail.com"
+                        value={realEmail}
+                        onChange={(e) => setRealEmail(e.target.value)}
+                        className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
+                      />
+                      <p className="mt-1 text-[10px] text-gray-500">Password bhule gele reset code ei email e jabe. Na dile pore profile theke add kora jabe.</p>
                     </div>
 
                     {/* Blood Group */}

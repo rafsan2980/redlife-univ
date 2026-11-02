@@ -60,6 +60,20 @@ export const api = {
     return fetchAPI('/api/auth/me');
   },
 
+  async forgotPassword(identifier: string): Promise<{ message: string }> {
+    return fetchAPI('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ identifier }),
+    });
+  },
+
+  async resetPassword(identifier: string, code: string, newPassword: string): Promise<{ message: string }> {
+    return fetchAPI('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ identifier, code, newPassword }),
+    });
+  },
+
   async updateMe(details: Partial<User>): Promise<{ user: User }> {
     return fetchAPI('/api/auth/me', {
       method: 'PUT',
