@@ -307,6 +307,9 @@ export default function AdminDashboard({
     return matchSearch && matchBlood && matchDept && matchAvail;
   });
 
+  // Easy reading: pending requests first, urgent/critical before normal,
+  // then newest first — so a new request is always easy to spot at the top.
+  const levelRank = (level?: string) => level === 'Critical' ? 0 : level === 'Urgent' ? 1 : 2;
   const filteredRequests = requests.filter(r => {
     const matchSearch = requestSearch === '' ||
       r.patientName.toLowerCase().includes(requestSearch.toLowerCase()) ||
@@ -319,7 +322,21 @@ export default function AdminDashboard({
     const matchLevel = requestLevel === '' || r.emergencyLevel === requestLevel;
 
     return matchSearch && matchBlood && matchStatus && matchLevel;
+  }).sort((a, b) => {
+    const statusRank = (s: string) => s === 'pending' ? 0 : 1;
+    if (statusRank(a.status) !== statusRank(b.status)) return statusRank(a.status) - statusRank(b.status);
+    if (levelRank(a.emergencyLevel) !== levelRank(b.emergencyLevel)) return levelRank(a.emergencyLevel) - levelRank(b.emergencyLevel);
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+
+  // Easy labels for the request cards, filters and buttons (same values,
+  // only the words shown on screen are simpler).
+  const levelLabel = (level?: string) => level === 'Critical' ? 'Khub Joruri' : level === 'Urgent' ? 'Joruri' : 'Sadharon';
+  const statusLabel = (status: string) => status === 'pending' ? 'Rokto Lagbe' : status === 'fulfilled' ? 'Pawa Geche' : 'Batil';
+  const isNewRequest = (createdAt: string) => {
+    const t = new Date(createdAt).getTime();
+    return !isNaN(t) && Date.now() - t < 24 * 60 * 60 * 1000;
+  };
 
   return (
     <div className="w-full text-white">
@@ -814,10 +831,10 @@ export default function AdminDashboard({
                       onChange={(e) => setRequestStatus(e.target.value)}
                       className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-2.5 text-xs font-bold text-white outline-none focus:border-[#FF1E1E]"
                     >
-                      <option value="" className="bg-[#0B1220]">Status: All</option>
-                      <option value="pending" className="bg-[#0B1220]">Pending</option>
-                      <option value="fulfilled" className="bg-[#0B1220]">Fulfilled</option>
-                      <option value="cancelled" className="bg-[#0B1220]">Cancelled</option>
+                      <option value="" className="bg-[#0B1220]">Obostha: Shob</option>
+                      <option value="pending" className="bg-[#0B1220]">Rokto Lagbe</option>
+                      <option value="fulfilled" className="bg-[#0B1220]">Pawa Geche</option>
+                      <option value="cancelled" className="bg-[#0B1220]">Batil</option>
                     </select>
                   </div>
 
@@ -827,14 +844,18 @@ export default function AdminDashboard({
                       onChange={(e) => setRequestLevel(e.target.value)}
                       className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-2.5 text-xs font-bold text-white outline-none focus:border-[#FF1E1E]"
                     >
-                      <option value="" className="bg-[#0B1220]">Level: All</option>
-                      <option value="Normal" className="bg-[#0B1220]">Normal</option>
-                      <option value="Urgent" className="bg-[#0B1220]">Urgent</option>
-                      <option value="Critical" className="bg-[#0B1220]">Critical</option>
+                      <option value="" className="bg-[#0B1220]">Level: Shob</option>
+                      <option value="Normal" className="bg-[#0B1220]">Sadharon</option>
+                      <option value="Urgent" className="bg-[#0B1220]">Joruri</option>
+                      <option value="Critical" className="bg-[#0B1220]">Khub Joruri</option>
                     </select>
                   </div>
                 </div>
               </div>
+
+              <p className="text-xs text-gray-400 font-medium -mt-2 mb-1">
+                Notun request shobar age upore dekhabe. Joruri request lal/holud diye chihnito. Button er mane: <strong className="text-white">Abar Kholo</strong> = request abar chalu, <strong className="text-white">Rokto Pawa Geche</strong> = rokto pawa geche, <strong className="text-white">Batil Koro</strong> = request batil.
+              </p>
 
               {/* Grid indices of requests */}
               {filteredRequests.length === 0 ? (
@@ -856,6 +877,11 @@ export default function AdminDashboard({
                             <span className="font-mono text-sm font-black bg-[#FF1E1E] text-white px-3 py-1 rounded-lg shadow-[0_0_8px_rgba(255,30,30,0.35)]">
                               {req.bloodGroup}
                             </span>
+                            {req.status === 'pending' && isNewRequest(req.createdAt) && (
+                              <span className="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest bg-emerald-500 text-white animate-pulse">
+                                NOTUN
+                              </span>
+                            )}
                             <div className="min-w-0 text-left">
                               <h4 className="font-display font-extrabold text-white truncate">{req.patientName}</h4>
                               <p className="text-[10px] text-gray-400">Needed Units: <strong className="text-white font-mono text-xs">{req.unitsRequired} bags</strong></p>
@@ -870,7 +896,7 @@ export default function AdminDashboard({
                                 ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
                                 : 'bg-white/5 text-gray-400 border border-white/5'
                             }`}>
-                              {req.emergencyLevel || 'Normal'}
+                              {levelLabel(req.emergencyLevel)}
                             </span>
 
                             <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
@@ -880,7 +906,7 @@ export default function AdminDashboard({
                                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                 : 'bg-white/5 text-gray-500 border border-white/10'
                             }`}>
-                              {req.status}
+                              {statusLabel(req.status)}
                             </span>
                           </div>
                         </div>
@@ -913,23 +939,26 @@ export default function AdminDashboard({
                           <button
                             onClick={() => handleUpdateStatusQuick(req.id, 'pending')}
                             disabled={req.status === 'pending'}
+                            title="Ei request ta abar chalu koro (Rokto Lagbe)"
                             className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/15 text-amber-400 border border-amber-500/20 text-[10px] font-bold rounded cursor-pointer disabled:opacity-25"
                           >
-                            Activate Review
+                            Abar Kholo
                           </button>
                           <button
                             onClick={() => handleUpdateStatusQuick(req.id, 'fulfilled')}
                             disabled={req.status === 'fulfilled'}
+                            title="Rokto pawa geche, request sesh koro"
                             className="px-2.5 py-1 bg-emerald-500/15 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-5–/30 text-[10px] font-bold rounded cursor-pointer disabled:opacity-25"
                           >
-                            Mark Saved ✓
+                            Rokto Pawa Geche ✓
                           </button>
                           <button
                             onClick={() => handleUpdateStatusQuick(req.id, 'cancelled')}
                             disabled={req.status === 'cancelled'}
+                            title="Ei request ta batil koro"
                             className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-gray-400 border border-white/8 text-[10px] font-bold rounded cursor-pointer disabled:opacity-25"
                           >
-                            Cancel Appeal
+                            Batil Koro
                           </button>
                         </div>
 
@@ -939,7 +968,7 @@ export default function AdminDashboard({
                             className="flex h-8 px-2.5 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 border border-white/8 text-[10px] font-bold cursor-pointer transition-colors"
                           >
                             <Edit className="h-3 w-3 mr-1 text-[#FF1E1E]" />
-                            Edit details
+                            Thik Koro
                           </button>
                         </div>
                       </div>
