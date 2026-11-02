@@ -445,7 +445,7 @@ export default function DonorDashboard({
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Computer Science & Engineering"
+                  placeholder="Computer Science & Engineering"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   className="h-10.5 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-sm font-medium text-white outline-none focus:border-[#FF1E1E]"
@@ -459,7 +459,7 @@ export default function DonorDashboard({
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Sher-e-Bangla Hall"
+                  placeholder="Sher-e-Bangla Hall"
                   value={hall}
                   onChange={(e) => setHall(e.target.value)}
                   className="h-10.5 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-sm font-medium text-white outline-none focus:border-[#FF1E1E]"

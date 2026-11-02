@@ -50,7 +50,7 @@ export default function DonorSearch({
               <span>Find University Donors</span>
             </h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              Search verified student donors across campus departments and residential halls
+              Search verified student donors across campus departments
             </p>
           </div>
           <span className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full bg-[#FF1E1E]/10 border border-[#FF1E1E]/20 px-3 py-1 text-[10px] font-extrabold text-[#FF1E1E] uppercase tracking-wider">
@@ -82,16 +82,16 @@ export default function DonorSearch({
             </div>
           </div>
 
-          {/* Department or Hall search input */}
+          {/* Department search input */}
           <div className="md:col-span-4">
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-              Department or Residential Hall
+              Department
             </label>
             <div className="relative">
               <MapPin className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="e.g. CSE, Sher-e-Bangla Hall, BBA..."
+                placeholder="CSE, BBA, EEE..."
                 value={locationQuery}
                 onChange={(e) => setLocationQuery(e.target.value)}
                 className="h-10 w-full rounded-xl border border-white/10 bg-[#111827] pl-10 pr-4 text-xs font-semibold text-white placeholder-gray-500 outline-none transition-all focus:border-[#FF1E1E]/60 focus:bg-[#111827] focus:ring-2 focus:ring-[#FF1E1E]/20"
@@ -161,7 +161,7 @@ export default function DonorSearch({
           </div>
           <h4 className="mt-4 font-display text-base font-bold text-white">No matching campus donors found</h4>
           <p className="mx-auto mt-2 max-w-sm text-xs text-gray-400">
-            Try adjusting blood group filters or searching a different university department/hall.
+            Try adjusting blood group filters or searching a different university department.
           </p>
         </div>
       ) : (

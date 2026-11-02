@@ -1270,7 +1270,7 @@ export default function AdminDashboard({
                     value={editReqTime}
                     onChange={(e) => setEditReqTime(e.target.value)}
                     className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-semibold text-white outline-none focus:border-[#FF1E1E]"
-                    placeholder="e.g. 10:00 AM"
+                    placeholder="10:00 AM"
                   />
                 </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Droplet, Clock, Navigation, CheckCircle2, Calendar, Phone, Activity, FileText, AlertTriangle } from 'lucide-react';
 import { BloodGroup } from '../types';
 
@@ -29,6 +29,34 @@ export default function RequestBloodModal({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] = useState(false);
+
+  // Rotating sample placeholders, so the user can see one example at a time
+  // and type their own details. No "e.g." prefix is shown.
+  const reasonExamples = [
+    'Pregnancy complications',
+    'Accident and emergency surgery',
+    'Thalassemia patient',
+    'Cancer treatment',
+    'Kidney dialysis',
+    'Severe anemia',
+    'Open-heart surgery',
+    'Dengue - low platelet count',
+  ];
+  const hospitalExamples = [
+    'Sher-e-Bangla Medical College Hospital',
+    'Barishal Sadar Hospital',
+    'Islami Bank Hospital, Barishal',
+    'Barishal General Hospital',
+  ];
+  const [reasonExampleIndex, setReasonExampleIndex] = useState(0);
+  const [hospitalExampleIndex, setHospitalExampleIndex] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setReasonExampleIndex((i) => (i + 1) % reasonExamples.length);
+      setHospitalExampleIndex((i) => (i + 1) % hospitalExamples.length);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, []);
 
   const bloodGroups: BloodGroup[] = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
@@ -164,7 +192,7 @@ export default function RequestBloodModal({
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Shakil Akhter (Student's Mother)"
+                      placeholder="Shakil Akhter (Student's Mother)"
                       value={patientName}
                       onChange={(e) => setPatientName(e.target.value)}
                       className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
@@ -208,7 +236,7 @@ export default function RequestBloodModal({
                     <textarea
                       required
                       rows={2}
-                      placeholder="e.g. Platelet count critical, patient undergoing urgent bypass open-heart surgery..."
+                      placeholder={reasonExamples[reasonExampleIndex]}
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       className="w-full rounded-xl border border-white/8 bg-[#111827] p-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E] resize-none"
@@ -232,7 +260,7 @@ export default function RequestBloodModal({
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Red Crescent General Hospital"
+                      placeholder={hospitalExamples[hospitalExampleIndex]}
                       value={hospital}
                       onChange={(e) => setHospital(e.target.value)}
                       className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
@@ -246,7 +274,7 @@ export default function RequestBloodModal({
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Campus Medical Wing / Central Clinic Road"
+                      placeholder=""
                       value={hospitalAddress}
                       onChange={(e) => setHospitalAddress(e.target.value)}
                       className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E]"
@@ -324,7 +352,7 @@ export default function RequestBloodModal({
                     </label>
                     <textarea
                       rows={2}
-                      placeholder="e.g. Please bring registration card, transport can be arranged from campus..."
+                      placeholder="Please bring registration card, transport can be arranged from campus..."
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       className="w-full rounded-xl border border-white/8 bg-[#111827] p-3 text-xs font-medium text-white outline-none focus:border-[#FF1E1E] resize-none"

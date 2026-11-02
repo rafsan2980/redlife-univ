@@ -44,7 +44,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
   const [searchName, setSearchName] = useState<string>('');
   const [selectedGroup, setSelectedGroup] = useState<string>('');
   const [searchDept, setSearchDept] = useState<string>('');
-  const [searchHall, setSearchHall] = useState<string>('');
+
   const [selectedStatus, setSelectedStatus] = useState<string>('all'); // all, available, busy, recently_donated, verified
 
   const bloodGroups: BloodGroup[] = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
@@ -141,11 +141,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
       if (searchDept && !d.department?.toLowerCase().includes(searchDept.toLowerCase())) {
         return false;
       }
-      // 4. Search by Hall
-      if (searchHall && !d.hall?.toLowerCase().includes(searchHall.toLowerCase())) {
-        return false;
-      }
-      // 5. Filter by Availability Status
+      // 4. Filter by Availability Status
       if (selectedStatus !== 'all') {
         const dStatus = getDonorStatus(d);
         if (selectedStatus === 'available' && dStatus !== 'available') return false;
@@ -155,7 +151,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
       }
       return true;
     });
-  }, [donors, searchName, selectedGroup, searchDept, searchHall, selectedStatus]);
+  }, [donors, searchName, selectedGroup, searchDept, selectedStatus]);
 
   // Framer Motion Animation Settings
   const fadeUpContainer = {
@@ -214,7 +210,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
             transition={{ delay: 0.25, duration: 0.6 }}
             className="text-sm md:text-base text-gray-300 max-w-2xl mx-auto leading-relaxed"
           >
-            Connecting student donors across departments, batches, and residential halls. Check live availability and donate blood safely within our campus community.
+            Connecting student donors across departments and batches. Check live availability and donate blood safely within our campus community.
           </motion.p>
 
           {/* Real-time counters banner */}
@@ -324,18 +320,17 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
             </div>
             <div>
               <h3 className="font-display text-sm font-extrabold tracking-tight">University Donor Directory Search</h3>
-              <p className="text-[11px] text-gray-400 mt-0.5">Filter campus volunteers by department, residential hall, and availability</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">Filter campus volunteers by department and availability</p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {(searchName || selectedGroup || searchDept || searchHall || selectedStatus !== 'all') && (
+            {(searchName || selectedGroup || searchDept || selectedStatus !== 'all') && (
               <button
                 onClick={() => {
                   setSearchName('');
                   setSelectedGroup('');
                   setSearchDept('');
-                  setSearchHall('');
                   setSelectedStatus('all');
                 }}
                 className="text-[11px] font-extrabold text-[#FF1E1E] hover:text-[#ff3c3c] bg-[#FF1E1E]/10 border border-[#FF1E1E]/20 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
@@ -356,7 +351,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
         </div>
 
         {/* Filter input elements matrix */}
-        <div className="grid gap-4 sm:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-3">
 
           {/* Donor Name Search Input */}
           <div className="space-y-1">
@@ -367,7 +362,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="e.g. Tariqul..."
+                placeholder="Tariqul Islam"
                 value={searchName}
                 onChange={(e) => setSearchName(e.target.value)}
                 className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] pl-9 pr-3 text-xs font-semibold text-white outline-none transition-all focus:border-[#FF1E1E]/60 focus:ring-1 focus:ring-[#FF1E1E]/30"
@@ -384,26 +379,9 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
               <GraduationCap className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="e.g. CSE, BBA, EEE..."
+                placeholder="CSE, BBA, EEE..."
                 value={searchDept}
                 onChange={(e) => setSearchDept(e.target.value)}
-                className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] pl-9 pr-3 text-xs font-semibold text-white outline-none transition-all focus:border-[#FF1E1E]/60 focus:ring-1 focus:ring-[#FF1E1E]/30"
-              />
-            </div>
-          </div>
-
-          {/* Residential Hall Search */}
-          <div className="space-y-1">
-            <label className="block text-[10px] font-black uppercase tracking-wider text-gray-400">
-              Residential Hall / Dormitory
-            </label>
-            <div className="relative">
-              <Building2 className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="e.g. Sher-e-Bangla Hall..."
-                value={searchHall}
-                onChange={(e) => setSearchHall(e.target.value)}
                 className="h-10 w-full rounded-xl border border-white/8 bg-[#111827] pl-9 pr-3 text-xs font-semibold text-white outline-none transition-all focus:border-[#FF1E1E]/60 focus:ring-1 focus:ring-[#FF1E1E]/30"
               />
             </div>
@@ -442,7 +420,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
             <Users className="h-10 w-10 text-gray-500 mx-auto opacity-60" />
             <h4 className="mt-3 font-display text-sm font-bold text-white">No matching campus donors found</h4>
             <p className="mt-1 text-xs text-gray-400 max-w-sm mx-auto">
-              Try adjusting your department, hall, or blood group search criteria.
+              Try adjusting your department or blood group search criteria.
             </p>
           </div>
         ) : (
@@ -579,7 +557,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
             </div>
             <h4 className="font-display text-sm font-black text-emerald-400">Verified Student Volunteers</h4>
             <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-              Profiles are authenticated with university department, roll number, and residential hall records for reliability.
+              Profiles are authenticated with university department and roll number records for reliability.
             </p>
           </div>
         </div>
