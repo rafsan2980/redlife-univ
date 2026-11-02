@@ -44,7 +44,7 @@ export default function DonationGallery({ onOpenRegister }: DonationGalleryProps
       </div>
 
       <div
-        className="relative mt-6 overflow-hidden rounded-2xl bg-black"
+        className="gallery-overlay relative mt-6 overflow-hidden rounded-2xl bg-black"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
@@ -60,9 +60,9 @@ export default function DonationGallery({ onOpenRegister }: DonationGalleryProps
               }`}
             />
           ))}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-4 pt-16 text-left">
-            <p className="text-base sm:text-lg font-bold text-white">{current.caption}</p>
-            <p className="text-xs text-gray-300">
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-5 pt-24 text-left">
+            <p className="text-lg sm:text-2xl font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">{current.caption}</p>
+            <p className="mt-1 text-sm font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
               {index + 1} / {PHOTOS.length} • Trust University, Barishal Campus Donor Network
             </p>
           </div>

@@ -304,6 +304,15 @@ textarea:focus {
   color: #FFFFFF !important;
 }
 
+/* Slideshow caption/controls on photos: the light-mode global rule above
+   forces .text-white to dark, which made the caption dark on photos.
+   Inside the slideshow image area, white text must stay white. */
+:root:not(.premium-dark):not(.dark) .gallery-overlay,
+:root:not(.premium-dark):not(.dark) .gallery-overlay * {
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+}
+
 .font-display {
   font-family: var(--font-display);
 }
