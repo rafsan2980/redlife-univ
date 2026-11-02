@@ -11,6 +11,7 @@ import RequestBloodModal from './components/RequestBloodModal';
 import { api, setAuthToken } from './lib/api';
 import { User, BloodRequest, DonorStats } from './types';
 import { ShieldCheck, Heart, AlertCircle, Droplet, Sparkles, LogIn, Users } from 'lucide-react';
+import { TRUST_UNIVERSITY_LOGO } from './trustLogo';
 
 export default function App() {
   // Night mode removed at the user's request: the site always stays in light theme,
@@ -304,6 +305,13 @@ export default function App() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 text-left">
             <div>
+              {/* Trust University logo, supplied by the user, on a white box so it shows clearly on green */}
+              <div className="mb-4 flex items-center space-x-3">
+                <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-white p-1.5 shadow-sm shrink-0">
+                  <img src={TRUST_UNIVERSITY_LOGO} alt="Trust University, Barishal logo" className="h-full w-full object-contain" />
+                </div>
+                <p className="text-sm font-bold leading-tight text-white">Trust University,<br />Barishal</p>
+              </div>
               <div className="flex items-center space-x-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF1E1E] text-white">
                   <Droplet className="h-6 w-6 fill-white" />
@@ -359,6 +367,26 @@ export default function App() {
                 </a>
               </div>
             </div>
+          </div>
+
+          {/* Campus map, under the contact sections */}
+          <div className="mt-10 border-t border-white/20 pt-6">
+            <h3 className="font-display text-base font-bold text-white">Campus Location</h3>
+            <div className="mt-2 h-1 w-10 bg-[#F59E0B]" />
+            <p className="mt-3 text-sm text-emerald-100">Trust University, Barishal &bull; Ruiya, Nabogram Road, Barishal</p>
+            <div className="mt-4 overflow-hidden rounded-xl border border-white/20 bg-white">
+              <iframe
+                title="Trust University, Barishal campus map"
+                src="https://maps.google.com/maps?q=Trust%20University%20Barishal%20Ruiya%20Nabogram%20Road&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                className="h-64 w-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            </div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Trust+University+Barishal+Ruiya+Nabogram+Road" target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm font-semibold text-[#FBBF24] hover:text-white hover:underline">
+              Open in Google Maps
+            </a>
           </div>
 
           <div className="mt-10 flex flex-col sm:flex-row justify-between items-center gap-3 border-t border-white/20 pt-6 text-xs text-emerald-100">
