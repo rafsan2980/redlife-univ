@@ -91,10 +91,10 @@ export default function Header({
             <button
               key={item.id}
               onClick={() => handleTabChange(item.id)}
-              className={`rounded-lg px-4 py-2 font-display text-sm font-semibold transition-all duration-250 ${
+              className={`rounded-lg border px-4 py-2 font-display text-sm font-semibold transition-all duration-250 ${
                 currentTab === item.id
-                  ? 'bg-white text-[#0F5A3A] border border-white shadow-sm'
-                  : 'text-white hover:bg-[#14532D] hover:text-white'
+                  ? 'bg-white text-[#0F5A3A] border-white shadow-sm'
+                  : 'bg-[#14532D] text-white border-white/70 hover:bg-white hover:text-[#0F5A3A]'
               }`}
             >
               {item.label}
@@ -107,7 +107,7 @@ export default function Header({
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
-            className="group relative flex h-9.5 w-9.5 items-center justify-center rounded-xl bg-white/5 text-gray-300 hover:bg-[#FF1E1E]/15 hover:text-[#FF1E1E] transition-all duration-300 border border-white/8 cursor-pointer active:scale-95 overflow-hidden"
+            className="group relative flex h-9.5 w-9.5 items-center justify-center rounded-xl bg-[#14532D] text-white hover:bg-white hover:text-[#0F5A3A] transition-all duration-300 border border-white/70 cursor-pointer active:scale-95 overflow-hidden"
             aria-label="Toggle Theme Mode"
             title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
           >
@@ -125,9 +125,9 @@ export default function Header({
           </button>
 
           {currentUser ? (
-            <div className="flex items-center space-x-3 border-l border-white/8 pl-3">
+            <div className="flex items-center space-x-3 border-l border-white/40 pl-3">
               <div 
-                className="flex cursor-pointer items-center space-x-2 rounded-lg py-1 px-2 transition-colors hover:bg-white/5"
+                className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white/70 bg-[#14532D] py-1 px-2 transition-colors hover:bg-white hover:text-[#0F5A3A]"
                 onClick={() => handleTabChange('dashboard')}
               >
                 <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#FF1E1E]/20 text-[#FF1E1E] border border-[#FF1E1E]/30">
@@ -154,10 +154,10 @@ export default function Header({
               </button>
             </div>
           ) : (
-            <div className="flex items-center space-x-2 border-l border-white/8 pl-3">
+            <div className="flex items-center space-x-2 border-l border-white/40 pl-3">
               <button
                 onClick={() => onOpenAuth('login')}
-                className="rounded-lg px-3 py-2 font-display text-xs font-bold uppercase tracking-wider text-gray-300 hover:bg-white/5 hover:text-white"
+                className="rounded-lg border border-white/70 bg-[#14532D] px-3 py-2 font-display text-xs font-bold uppercase tracking-wider text-white hover:bg-white hover:text-[#0F5A3A]"
               >
                 Log In
               </button>
@@ -211,10 +211,10 @@ export default function Header({
               <button
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
-                className={`block w-full rounded-lg px-4 py-2.5 text-left font-display text-sm font-semibold transition-all ${
+                className={`block w-full rounded-lg border px-4 py-2.5 text-left font-display text-sm font-semibold transition-all ${
                   currentTab === item.id
-                    ? 'bg-white text-[#0F5A3A] border border-white'
-                    : 'text-white hover:bg-[#14532D]'
+                    ? 'bg-white text-[#0F5A3A] border-white'
+                    : 'bg-[#14532D] text-white border-white/70 hover:bg-white hover:text-[#0F5A3A]'
                 }`}
               >
                 {item.label}
@@ -257,7 +257,7 @@ export default function Header({
                     setMobileMenuOpen(false);
                     onOpenAuth('login');
                   }}
-                  className="rounded-lg bg-white/5 py-2.5 text-center font-display text-xs font-bold uppercase tracking-wider text-gray-200 hover:bg-white/10"
+                  className="rounded-lg border border-white/70 bg-[#14532D] py-2.5 text-center font-display text-xs font-bold uppercase tracking-wider text-white hover:bg-white hover:text-[#0F5A3A]"
                 >
                   Log In
                 </button>

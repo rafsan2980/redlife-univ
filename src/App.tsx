@@ -309,18 +309,74 @@ export default function App() {
 
       </main>
 
-      {/* Modern, Polished Footer */}
-      <footer className="border-t-2 border-[#F59E0B] bg-[#0F5A3A] backdrop-blur-md py-8 text-center text-xs font-semibold text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <Droplet className="h-4.5 w-4.5 text-[#FF1E1E] fill-[#FF1E1E]" />
-            <span className="font-display font-bold text-white tracking-wide">RedLife Network</span>
-            <span className="text-gray-600">&bull;</span>
-            <span className="text-gray-300">University Campus Network</span>
+      {/* Expanded footer, in the style of a university footer, with RedLife's own wording.
+          University details below are the public campus facts (address, hotline, email,
+          programme names) — no university logo, slogan or copyright line is copied. */}
+      <footer className="border-t-2 border-[#F59E0B] bg-[#0F5A3A] backdrop-blur-md py-10 text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 text-left">
+            <div>
+              <div className="flex items-center space-x-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF1E1E] text-white">
+                  <Droplet className="h-6 w-6 fill-white" />
+                </div>
+                <div className="leading-none">
+                  <span className="font-display text-lg font-extrabold text-white">RedLife <span className="text-[#FBBF24]">Univ</span></span>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-100">Campus Donor Network</p>
+                </div>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-emerald-100">
+                A campus blood donor network for Trust University, Barishal students and faculty. Find donors, request blood in emergencies, and keep verified profiles ready.
+              </p>
+              <p className="mt-3 text-xs font-semibold text-[#FBBF24]">Every Drop Saves a Life</p>
+            </div>
+
+            <div>
+              <h3 className="font-display text-base font-bold text-white">Quick Links</h3>
+              <div className="mt-2 h-1 w-10 bg-[#F59E0B]" />
+              <ul className="mt-4 space-y-2 text-sm text-emerald-100">
+                <li><button onClick={() => setCurrentTab('search')} className="hover:text-white hover:underline cursor-pointer">Find Donors</button></li>
+                <li><button onClick={() => setCurrentTab('requests')} className="hover:text-white hover:underline cursor-pointer">Emergency Requests</button></li>
+                <li><button onClick={() => setCurrentTab('guidelines')} className="hover:text-white hover:underline cursor-pointer">Donation Info</button></li>
+                <li><button onClick={() => { setAuthModalView('register'); setAuthModalOpen(true); }} className="hover:text-white hover:underline cursor-pointer">Become a Donor</button></li>
+                <li><button onClick={() => setCurrentTab('search')} className="hover:text-white hover:underline cursor-pointer">Campus Donor Network</button></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-display text-base font-bold text-white">Academic Programs</h3>
+              <div className="mt-2 h-1 w-10 bg-[#F59E0B]" />
+              <ul className="mt-4 space-y-2 text-sm text-emerald-100">
+                <li>B.Sc. in Computer Science &amp; Engineering</li>
+                <li>B.Sc. in Electrical and Electronic Engineering</li>
+                <li>B.Sc. in Biochemistry &amp; Molecular Biology</li>
+                <li>Bachelor of Business Administration (BBA)</li>
+                <li>MBA &amp; EMBA</li>
+                <li>B.A. (Honours) in English</li>
+                <li>M.A. in English</li>
+                <li>BSS (Hons.) in Economics and Banking</li>
+                <li>M.Sc. in Biochemistry &amp; Biotechnology</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-display text-base font-bold text-white">Campus &amp; Contact</h3>
+              <div className="mt-2 h-1 w-10 bg-[#F59E0B]" />
+              <div className="mt-4 space-y-3 text-sm text-emerald-100">
+                <p><span className="block text-xs font-bold uppercase tracking-wider text-[#FBBF24]">Campus Address</span>Ruiya, Nabogram Road, Barishal</p>
+                <p><span className="block text-xs font-bold uppercase tracking-wider text-[#FBBF24]">Admission Hotline</span>+01844902012, +01844902013</p>
+                <p><span className="block text-xs font-bold uppercase tracking-wider text-[#FBBF24]">Official Email</span>info@trustuniversity.edu.bd</p>
+                <a href="https://www.trustuniversity.edu.bd/" target="_blank" rel="noreferrer" className="inline-block rounded-lg bg-[#F59E0B] px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-[#0B132B] hover:bg-[#FBBF24]">
+                  Visit Trust University Website
+                </a>
+              </div>
+            </div>
           </div>
-          <p className="text-[11px] font-medium text-gray-500">
-            &copy; 2569 - 2026 RedLife Univ Campus Donor Connection System. Built with pure state control handlers.
-          </p>
+
+          <div className="mt-10 flex flex-col sm:flex-row justify-between items-center gap-3 border-t border-white/20 pt-6 text-xs text-emerald-100">
+            <p>&copy; 2026 RedLife Univ &bull; Campus Donor Network for Trust University, Barishal</p>
+            <p className="font-semibold text-white">Trust University, Barishal &bull; Ruiya, Nabogram Road, Barishal</p>
+          </div>
         </div>
       </footer>
 
