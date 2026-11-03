@@ -719,7 +719,7 @@ async function startServer() {
 
     if (isSupabaseActive()) {
       try {
-        filteredDonors = await dbGetDonors();
+        filteredDonors = (await dbGetDonors()).filter(u => u.role === "donor");
       } catch (err) {
         console.error("Failed to fetch search donors from Supabase:", err);
         const db = readDB();
@@ -767,7 +767,7 @@ async function startServer() {
 
     if (isSupabaseActive()) {
       try {
-        donors = await dbGetDonors();
+        donors = (await dbGetDonors()).filter(u => u.role === "donor");
       } catch (err) {
         console.error("Failed to query stats from Supabase:", err);
         const db = readDB();
