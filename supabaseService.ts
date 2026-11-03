@@ -403,6 +403,103 @@ export async function dbMarkNotificationRead(id: string, donorId: string): Promi
 }
 
 /**
+ * Blood requests, stored permanently in Supabase so they survive a
+ * redeploy (requests used to live only in Render's local db.json and
+ * were wiped on every deploy). Every function returns null/false when
+ * Supabase or the table is unavailable, so the caller can fall back
+ * to the local file.
+ */
+function mapToAppRequest(r: any): any {
+  return {
+    id: r.id,
+    patientName: r.patient_name,
+    bloodGroup: r.blood_group,
+    unitsRequired: Number(r.units_required || 1),
+    hospital: r.hospital,
+    phone: r.phone,
+    dateNeeded: r.date_needed,
+    requiredTime: r.required_time || "",
+    hospitalAddress: r.hospital_address || "",
+    reason: r.reason,
+    emergencyLevel: r.emergency_level || "Normal",
+    isEmergency: r.emergency_level === "Critical" || r.emergency_level === "Urgent",
+    status: r.status || "pending",
+    createdBy: r.created_by || "guest-visitor",
+    creatorName: r.creator_name || "Guest Visitor",
+    notes: r.notes || "",
+    allowNotifications: r.allow_notifications !== undefined ? r.allow_notifications : true,
+    createdAt: r.created_at || new Date().toISOString()
+  };
+}
+
+function mapToSupabaseRequest(r: any): any {
+  return {
+    id: r.id,
+    patient_name: r.patientName,
+    blood_group: r.bloodGroup,
+    units_required: Number(r.unitsRequired || 1),
+    hospital: r.hospital,
+    phone: r.phone,
+    date_needed: r.dateNeeded,
+    required_time: r.requiredTime || "",
+    hospital_address: r.hospitalAddress || "",
+    reason: r.reason,
+    emergency_level: r.emergencyLevel || "Normal",
+    status: r.status || "pending",
+    created_by: r.createdBy || "guest-visitor",
+    creator_name: r.creatorName || "Guest Visitor",
+    notes: r.notes || "",
+    allow_notifications: r.allowNotifications !== undefined ? !!r.allowNotifications : true,
+    created_at: r.createdAt || new Date().toISOString()
+  };
+}
+
+export async function dbGetRequests(): Promise<any[] | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("blood_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) { console.error("Supabase Error getting requests:", error.message); return null; }
+    return (data || []).map(mapToAppRequest);
+  } catch (error) { console.error("Exception getting requests from Supabase:", error); return null; }
+}
+
+export async function dbInsertRequest(req: any): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from("blood_requests").insert([mapToSupabaseRequest(req)]);
+    if (error) { console.error("Supabase Error inserting request:", error.message); return false; }
+    return true;
+  } catch (error) { console.error("Exception inserting request to Supabase:", error); return false; }
+}
+
+export async function dbUpdateRequest(id: string, updates: any): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  try {
+    const mapped: any = {};
+    if (updates.status !== undefined) mapped.status = updates.status;
+    const { data, error } = await supabase.from("blood_requests").update(mapped).eq("id", id).select();
+    if (error) { console.error("Supabase Error updating request:", error.message); return false; }
+    return !!(data && data.length > 0);
+  } catch (error) { console.error("Exception updating request in Supabase:", error); return false; }
+}
+
+export async function dbDeleteRequest(id: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from("blood_requests").delete().eq("id", id);
+    if (error) { console.error("Supabase Error deleting request:", error.message); return false; }
+    return true;
+  } catch (error) { console.error("Exception deleting request in Supabase:", error); return false; }
+}
+
+/**
  * Password reset codes, stored permanently in Supabase so they survive a
  * redeploy. Returns null when Supabase or the table is unavailable, so
  * the caller can fall back to the local file. Code hashes use the same

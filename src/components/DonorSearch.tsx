@@ -241,7 +241,8 @@ export default function DonorSearch({
                   </div>
                 </div>
 
-                {/* Direct Donor Contact Area */}
+                {/* Direct Donor Contact Area - phone only for logged-in visitors */}
+                {donor.phone ? (
                 <div className="mt-5 border-t border-white/5 pt-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between text-xs rounded-xl bg-[#111827] border border-white/8 p-2.5 font-bold text-gray-100">
                     <div className="flex items-center space-x-1.5 font-mono text-gray-300">
@@ -268,6 +269,11 @@ export default function DonorSearch({
                     </a>
                   </div>
                 </div>
+                ) : (
+                <div className="mt-5 border-t border-white/5 pt-4">
+                  <p className="text-xs text-gray-400 font-semibold">Donor er phone number dekhte Log In korun.</p>
+                </div>
+                )}
 
               </div>
             );

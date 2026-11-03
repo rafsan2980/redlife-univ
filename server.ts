@@ -13,6 +13,10 @@ import {
   dbGetAllNotifications,
   dbInsertNotifications,
   dbMarkNotificationRead,
+  dbGetRequests,
+  dbInsertRequest,
+  dbUpdateRequest,
+  dbDeleteRequest,
   dbInsertPasswordReset,
   dbGetLatestPasswordReset,
   dbUpdatePasswordReset,
@@ -129,149 +133,8 @@ const DEFAULT_DB: DB = {
       role: "admin",
       createdAt: "2026-01-01T00:00:00Z"
     },
-    {
-      id: "donor-1",
-      name: "Tariqul Islam Rishad",
-      email: "tariqul.cse@univ.edu",
-      passwordHash: "donor123",
-      phone: "01822334455",
-      bloodGroup: "A+",
-      department: "Computer Science & Engineering",
-      hall: "Sher-e-Bangla Hall",
-      address: "Sher-e-Bangla Hall, Room 402",
-      roll: "56",
-      batch: "48th Batch",
-      donationCount: 4,
-      lastDonationDate: "2026-01-10",
-      isAvailable: true,
-      isVerified: true,
-      role: "donor",
-      createdAt: "2026-02-10T11:20:00Z"
-    },
-    {
-      id: "donor-2",
-      name: "Arifa Chowdhury Mim",
-      email: "arifa.bba@univ.edu",
-      passwordHash: "donor123",
-      phone: "01511223366",
-      bloodGroup: "O-", // Rare blood donor!
-      department: "Business Administration",
-      hall: "Pritilata Hall",
-      address: "Pritilata Hall, Room 108",
-      roll: "22",
-      batch: "50th Batch",
-      donationCount: 2,
-      lastDonationDate: "2025-12-05",
-      isAvailable: true,
-      isVerified: true,
-      role: "donor",
-      createdAt: "2026-03-01T15:45:00Z"
-    },
-    {
-      id: "donor-3",
-      name: "Raihan Kibria",
-      email: "raihan.eee@univ.edu",
-      passwordHash: "donor123",
-      phone: "01944556677",
-      bloodGroup: "B+",
-      department: "Electrical & Electronic Engineering",
-      hall: "Fazlul Huq Hall",
-      address: "Fazlul Huq Hall, Room 215",
-      roll: "89",
-      batch: "49th Batch",
-      donationCount: 3,
-      lastDonationDate: "2026-04-18", // Donated recently (< 3 months)
-      isAvailable: false,
-      isVerified: true,
-      role: "donor",
-      createdAt: "2026-03-15T08:30:00Z"
-    },
-    {
-      id: "donor-4",
-      name: "Zaber Al-Mansur",
-      email: "zaber.me@univ.edu",
-      passwordHash: "donor123",
-      phone: "01733445588",
-      bloodGroup: "AB+",
-      department: "Mechanical Engineering",
-      hall: "Lutfur Rahman Hall",
-      address: "Lutfur Rahman Hall, Room 303",
-      roll: "12",
-      batch: "51st Batch",
-      donationCount: 0,
-      lastDonationDate: "", // Never donated yet
-      isAvailable: true,
-      isVerified: false, // Needs admin verification
-      role: "donor",
-      createdAt: "2026-05-20T10:00:00Z"
-    },
-    {
-      id: "donor-5",
-      name: "Nusrat Jahan Bristy",
-      email: "nusrat.che@univ.edu",
-      passwordHash: "donor123",
-      phone: "01688776655",
-      bloodGroup: "O+",
-      department: "Chemical Engineering",
-      hall: "Suhrawardy Hall",
-      address: "Suhrawardy Hall, Room 204",
-      roll: "71",
-      batch: "52nd Batch",
-      donationCount: 5,
-      lastDonationDate: "2025-11-20",
-      isAvailable: true,
-      isVerified: true,
-      role: "donor",
-      createdAt: "2026-04-05T09:15:00Z"
-    }
   ],
-  requests: [
-    {
-      id: "req-1",
-      patientName: "Kamruzzaman (Student's Father)",
-      bloodGroup: "O-",
-      unitsRequired: 2,
-      hospital: "University Medical Center (Emergency Wing)",
-      phone: "01722998877",
-      dateNeeded: "2026-05-25",
-      reason: "Urgent heart surgery preparation. O- is critical.",
-      isEmergency: true,
-      status: "pending",
-      createdBy: "donor-1",
-      creatorName: "Tariqul Islam Rishad",
-      createdAt: "2026-05-21T14:30:00Z"
-    },
-    {
-      id: "req-2",
-      patientName: "Sinthia Akhter (CSE Student)",
-      bloodGroup: "A+",
-      unitsRequired: 1,
-      hospital: "City Central Clinic, University Hospital Road",
-      phone: "01511223366",
-      dateNeeded: "2026-05-23",
-      reason: "Severe Typhoid treatment & platelet count restoration.",
-      isEmergency: true,
-      status: "pending",
-      createdBy: "donor-2",
-      creatorName: "Arifa Chowdhury Mim",
-      createdAt: "2026-05-22T08:00:00Z"
-    },
-    {
-      id: "req-3",
-      patientName: "Jamal Uddin (Staff Member)",
-      bloodGroup: "B+",
-      unitsRequired: 3,
-      hospital: "University Medical Center (Maternity Ward)",
-      phone: "01944556677",
-      dateNeeded: "2026-05-18",
-      reason: "Emergency C-Section supply for staff member's spouse.",
-      isEmergency: false,
-      status: "fulfilled",
-      createdBy: "donor-3",
-      creatorName: "Raihan Kibria",
-      createdAt: "2026-05-17T12:00:00Z"
-    }
-  ]
+  requests: []
 };
 
 // Helper database functions
@@ -281,20 +144,7 @@ function readDB(): DB {
       const initialDb = {
         ...DEFAULT_DB,
         notifications: [],
-        activities: [
-          {
-            id: "act-1",
-            type: "registration",
-            message: "New donor registration: Tariqul Islam Rishad (A+)",
-            createdAt: new Date(Date.now() - 3600000 * 24).toISOString()
-          },
-          {
-            id: "act-2",
-            type: "request",
-            message: "New blood appeal: O- needed at University Medical Center",
-            createdAt: new Date(Date.now() - 3600000 * 4).toISOString()
-          }
-        ]
+        activities: []
       };
       fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2));
       return initialDb as any;
@@ -307,20 +157,7 @@ function readDB(): DB {
       migrated = true;
     }
     if (!parsed.activities) {
-      parsed.activities = [
-        {
-          id: "act-1",
-          type: "registration",
-          message: "New donor registration: Tariqul Islam Rishad (A+)",
-          createdAt: new Date(Date.now() - 3600000 * 24).toISOString()
-        },
-        {
-          id: "act-2",
-          type: "request",
-          message: "New blood appeal: O- needed at University Medical Center",
-          createdAt: new Date(Date.now() - 3600000 * 4).toISOString()
-        }
-      ];
+      parsed.activities = [];
       migrated = true;
     }
     if (migrated) {
@@ -412,6 +249,22 @@ async function startServer() {
     await seedSupabaseIfNeeded(baselineDb.users);
   } catch (err) {
     console.error("Failed to seed Supabase on server boot:", err);
+  }
+
+  // Make sure the admin account also exists in Supabase, so an admin
+  // password change survives a redeploy (local db.json resets to the
+  // repo seed on every deploy). Insert only if absent, never overwrite.
+  try {
+    if (isSupabaseActive()) {
+      const supabaseDonors = await dbGetDonors();
+      const adminLocal = readDB().users.find(u => u.role === "admin");
+      if (adminLocal && !supabaseDonors.some((u: any) => u.id === adminLocal.id || u.email.toLowerCase() === adminLocal.email.toLowerCase())) {
+        await dbInsertDonor(adminLocal);
+        console.log("Admin account synced to Supabase.");
+      }
+    }
+  } catch (err) {
+    console.error("Failed to ensure admin in Supabase:", err);
   }
 
   // Simple token format: bearer token is essentially the userId
@@ -553,33 +406,32 @@ async function startServer() {
     }
 
     const db = readDB();
-    let user = db.users.find(u =>
-      u.email.toLowerCase() === identifier.toLowerCase() || u.phone === identifier
-    );
-
-    // If candidate isn't in memory/backup DB, let's query Supabase
-    if (!user && isSupabaseActive()) {
+    let user: any = null;
+    // Supabase is the source of truth when active, so a password changed
+    // in Supabase (e.g. the admin password) is not overridden by the
+    // seed copy that ships in the repo and returns on every redeploy.
+    if (isSupabaseActive()) {
       try {
         const supabaseDonors = await dbGetDonors();
-        const found = supabaseDonors.find(u =>
+        user = supabaseDonors.find(u =>
           u.email.toLowerCase() === identifier.toLowerCase() || u.phone === identifier
-        );
-        if (found) {
-          user = found;
-          // Sync it into the local memory/backup database
-          const exists = db.users.some(u => u.id === found.id);
-          if (!exists) {
-            db.users.push(found);
-            writeDB(db);
-          }
-        }
+        ) || null;
       } catch (err) {
         console.error("Failed to query donor login on Supabase:", err);
       }
     }
+    if (!user) {
+      // Local fallback, but the old demo donor accounts (donor-1..5)
+      // are disabled for public use; only the admin keeps a local login.
+      const SEED_DEMO_IDS = new Set(["donor-1", "donor-2", "donor-3", "donor-4", "donor-5"]);
+      user = db.users.find(u =>
+        !SEED_DEMO_IDS.has(u.id) &&
+        (u.email.toLowerCase() === identifier.toLowerCase() || u.phone === identifier)
+      ) || null;
+    }
 
     if (!user || !verifyPassword(password, user.passwordHash)) {
-      return res.status(401).json({ error: "Invalid login credentials. Please double check or try 'admin@univ.edu' & 'admin123' for immediate exploration." });
+      return res.status(401).json({ error: "Invalid login credentials. Please double check and try again." });
     }
 
     // Upgrade a legacy plain-text password to a hash on successful login.
@@ -684,6 +536,29 @@ async function startServer() {
 
     const { passwordHash, ...safeUser } = db.users[userIndex];
     res.json({ user: safeUser });
+  });
+
+  // Change password while logged in (used to replace demo passwords
+  // before public launch). Updates Supabase too when the account is there,
+  // so the new password survives a redeploy.
+  app.post("/api/auth/change-password", authenticate, async (req: any, res) => {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword || String(newPassword).length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters." });
+    }
+    const db = readDB();
+    const user = db.users.find(u => u.id === req.user.id) || req.user;
+    if (!verifyPassword(String(currentPassword), user.passwordHash)) {
+      return res.status(400).json({ error: "Current password is incorrect." });
+    }
+    const hashed = hashPassword(String(newPassword));
+    const localIndex = db.users.findIndex(u => u.id === req.user.id);
+    if (localIndex !== -1) db.users[localIndex].passwordHash = hashed;
+    writeDB(db);
+    if (isSupabaseActive()) {
+      try { await dbUpdateDonor(req.user.id, { passwordHash: hashed }); } catch { /* local copy updated */ }
+    }
+    return res.json({ message: "Password changed successfully." });
   });
 
   // Forgot password: send a 6-digit code to the user's REAL email.
@@ -834,6 +709,9 @@ async function startServer() {
       const token = authHeader.split(" ")[1];
       const dbTemp = readDB();
       isLoggedIn = dbTemp.users.some(u => u.id === token);
+      if (!isLoggedIn && isSupabaseActive()) {
+        try { isLoggedIn = (await dbGetDonors()).some((u: any) => u.id === token); } catch { /* stay logged out */ }
+      }
     }
 
     const { bloodGroup, location, availableOnly } = req.query;
@@ -868,10 +746,15 @@ async function startServer() {
       filteredDonors = filteredDonors.filter(u => u.isAvailable === true);
     }
 
-    // Process public info vs private info
-    // Emergency Mode: Expose donor contact numbers publicly so visitors can access life safety details instantly!
+    // Process public info vs private info: donor phone numbers and
+    // emails are private. Only a logged-in visitor may see them, so a
+    // public search never leaks student contact details.
     const publicDonors = filteredDonors.map(u => {
       const { passwordHash, ...safeUser } = u;
+      if (!isLoggedIn) {
+        safeUser.phone = "";
+        safeUser.email = "";
+      }
       return safeUser;
     });
 
@@ -896,7 +779,11 @@ async function startServer() {
     }
 
     const db = readDB();
-    const requests = db.requests;
+    let requests: any[] = db.requests;
+    if (isSupabaseActive()) {
+      const supabaseRequests = await dbGetRequests();
+      if (supabaseRequests !== null) requests = supabaseRequests;
+    }
 
     const stats = {
       totalDonors: donors.length,
@@ -908,11 +795,21 @@ async function startServer() {
     res.json(stats);
   });
 
-  // Emergency Requests: Get all active/fulfilled
-  app.get("/api/requests", (req, res) => {
-    const db = readDB();
+  // Emergency Requests: Get all active/fulfilled. Supabase first when
+  // available (permanent); local file only as fallback.
+  app.get("/api/requests", async (req, res) => {
+    let requests: any[] = [];
+    let fromSupabase = false;
+    if (isSupabaseActive()) {
+      const supabaseRequests = await dbGetRequests();
+      if (supabaseRequests !== null) { requests = supabaseRequests; fromSupabase = true; }
+    }
+    if (!fromSupabase) {
+      const db = readDB();
+      requests = db.requests;
+    }
     // Sort pending requests to the top, then sorted by date (newest first)
-    const sortedRequests = [...db.requests].sort((a, b) => {
+    const sortedRequests = [...requests].sort((a, b) => {
       if (a.status === "pending" && b.status !== "pending") return -1;
       if (a.status !== "pending" && b.status === "pending") return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -975,7 +872,13 @@ async function startServer() {
       allowNotifications: allowNotifications !== undefined ? !!allowNotifications : true
     };
 
-    db.requests.unshift(newRequest);
+    let savedRequestToSupabase = false;
+    if (isSupabaseActive()) {
+      savedRequestToSupabase = await dbInsertRequest(newRequest);
+    }
+    if (!savedRequestToSupabase) {
+      db.requests.unshift(newRequest);
+    }
 
     // Dynamic Notifications Triggering Logic: compatible blood groups,
     // non-suspended donors and admins with a compatible group (an admin
@@ -1037,12 +940,30 @@ async function startServer() {
   });
 
   // Emergency Requests: Update Request Status (Fulfill/Cancel)
-  app.put("/api/requests/:id", authenticate, (req: any, res) => {
+  app.put("/api/requests/:id", authenticate, async (req: any, res) => {
     const { status } = req.body;
     const { id } = req.params;
 
     if (!status || !['pending', 'fulfilled', 'cancelled'].includes(status)) {
       return res.status(400).json({ error: "Invalid status state transition." });
+    }
+
+    // Supabase first when available (permanent storage).
+    if (isSupabaseActive()) {
+      const supabaseRequests = await dbGetRequests();
+      const found = supabaseRequests ? supabaseRequests.find(r => r.id === id) : null;
+      if (found) {
+        if (found.createdBy !== req.user.id && req.user.role !== "admin") {
+          return res.status(403).json({ error: "Only the author or a university admin can update this request." });
+        }
+        const ok = await dbUpdateRequest(id, { status });
+        if (ok) {
+          const refreshed = await dbGetRequests();
+          const updated = refreshed ? refreshed.find(r => r.id === id) : null;
+          if (updated) return res.json(updated);
+        }
+        return res.status(500).json({ error: "Could not update this request." });
+      }
     }
 
     const db = readDB();
@@ -1070,8 +991,21 @@ async function startServer() {
   });
 
   // Emergency Requests: Delete Request
-  app.delete("/api/requests/:id", authenticate, (req: any, res) => {
+  app.delete("/api/requests/:id", authenticate, async (req: any, res) => {
     const { id } = req.params;
+
+    if (isSupabaseActive()) {
+      const supabaseRequests = await dbGetRequests();
+      const found = supabaseRequests ? supabaseRequests.find(r => r.id === id) : null;
+      if (found) {
+        if (found.createdBy !== req.user.id && req.user.role !== "admin") {
+          return res.status(403).json({ error: "Only the request author or an admin can delete this record." });
+        }
+        await dbDeleteRequest(id);
+        return res.json({ message: "Request successfully removed." });
+      }
+    }
+
     const db = readDB();
     const reqIndex = db.requests.findIndex(r => r.id === id);
 

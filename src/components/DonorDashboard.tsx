@@ -49,6 +49,32 @@ export default function DonorDashboard({
   const [isAvailable, setIsAvailable] = useState(currentUser.isAvailable);
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwMsg, setPwMsg] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setPwMsg('New passwords do not match.');
+      return;
+    }
+    setPwSaving(true);
+    setPwMsg('');
+    try {
+      const result = await api.changePassword(currentPassword, newPassword);
+      setPwMsg(result.message || 'Password changed successfully.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPwMsg(err.message || 'Failed to change password');
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   // Notifications API states
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -491,6 +517,40 @@ export default function DonorDashboard({
               >
                 <Save className="h-4 w-4" />
                 <span>{isSaving ? 'Saving Changes...' : 'Save Settings Changes'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Change Password */}
+        <div className="rounded-2xl border border-white/8 bg-[#0B1220] p-6 shadow-xl md:p-8 text-left">
+          <div className="border-b border-white/5 pb-5 mb-5 text-left">
+            <h3 className="font-display text-lg font-bold text-white">Change Password</h3>
+            <p className="text-xs text-gray-400">Demo password bodlate chaile ekhan theke bodlan. Notun password mone rakhben.</p>
+          </div>
+          <form onSubmit={handleChangePassword} className="space-y-5 text-left">
+            {pwMsg && (
+              <div className="rounded-xl bg-white/5 border border-white/10 p-3.5 text-xs text-gray-200 font-bold">
+                <span>{pwMsg}</span>
+              </div>
+            )}
+            <div className="grid gap-5 sm:grid-cols-3 text-left">
+              <div>
+                <label className="block text-xs font-extrabold uppercase tracking-wide text-gray-400 mb-2">Current Password</label>
+                <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="h-10.5 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-sm font-medium text-white outline-none focus:border-[#FF1E1E]" />
+              </div>
+              <div>
+                <label className="block text-xs font-extrabold uppercase tracking-wide text-gray-400 mb-2">New Password</label>
+                <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="h-10.5 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-sm font-medium text-white outline-none focus:border-[#FF1E1E]" />
+              </div>
+              <div>
+                <label className="block text-xs font-extrabold uppercase tracking-wide text-gray-400 mb-2">Confirm New Password</label>
+                <input type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="h-10.5 w-full rounded-xl border border-white/8 bg-[#111827] px-3 text-sm font-medium text-white outline-none focus:border-[#FF1E1E]" />
+              </div>
+            </div>
+            <div className="pt-2 flex justify-end">
+              <button type="submit" disabled={pwSaving} className="inline-flex items-center space-x-2 rounded-xl bg-[#FF1E1E] px-5 py-3 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-[#ff3c3c] disabled:opacity-50 cursor-pointer">
+                <span>{pwSaving ? 'Changing...' : 'Change Password'}</span>
               </button>
             </div>
           </form>

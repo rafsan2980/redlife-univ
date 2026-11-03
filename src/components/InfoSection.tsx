@@ -497,7 +497,8 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
                     </div>
                   </div>
 
-                  {/* Actions */}
+                  {/* Actions - phone only for logged-in visitors */}
+                  {donor.phone ? (
                   <div className="mt-5 pt-3 border-t border-white/5 space-y-2.5">
                     <div className="flex items-center justify-between rounded-xl bg-[#111827] border border-white/8 p-2 text-xs font-bold text-gray-300">
                       <span className="flex items-center gap-1.5 font-mono">
@@ -527,6 +528,11 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
                       <span>Call Donor</span>
                     </a>
                   </div>
+                  ) : (
+                  <div className="mt-5 pt-3 border-t border-white/5">
+                    <p className="text-xs text-gray-400 font-semibold">Donor er phone number dekhte Log In korun.</p>
+                  </div>
+                  )}
 
                 </motion.div>
               );

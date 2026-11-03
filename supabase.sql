@@ -93,6 +93,52 @@ create policy "Public delete notifications"
   on public.notifications for delete
   using (true);
 
+-- Blood requests: permanent home for emergency requests. Previously
+-- requests lived only in Render's local db.json and were wiped on every
+-- deploy; now the server writes them here first, with local fallback.
+create table if not exists public.blood_requests (
+  id text primary key,
+  patient_name text not null,
+  blood_group text not null,
+  units_required integer default 1,
+  hospital text,
+  phone text,
+  date_needed text,
+  required_time text,
+  hospital_address text,
+  reason text,
+  emergency_level text default 'Normal',
+  status text default 'pending',
+  created_by text,
+  creator_name text,
+  notes text,
+  allow_notifications boolean default true,
+  created_at timestamptz default now()
+);
+
+alter table public.blood_requests enable row level security;
+
+drop policy if exists "Public read blood_requests" on public.blood_requests;
+create policy "Public read blood_requests"
+  on public.blood_requests for select
+  using (true);
+
+drop policy if exists "Public insert blood_requests" on public.blood_requests;
+create policy "Public insert blood_requests"
+  on public.blood_requests for insert
+  with check (true);
+
+drop policy if exists "Public update blood_requests" on public.blood_requests;
+create policy "Public update blood_requests"
+  on public.blood_requests for update
+  using (true)
+  with check (true);
+
+drop policy if exists "Public delete blood_requests" on public.blood_requests;
+create policy "Public delete blood_requests"
+  on public.blood_requests for delete
+  using (true);
+
 -- Password reset codes: one row per forgot-password request.
 -- Only the code HASH is stored (scrypt format, same as passwords),
 -- never the plain code. Codes expire after 10 minutes, can be used
