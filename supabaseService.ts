@@ -578,6 +578,89 @@ export async function dbUpdatePasswordReset(id: string, updates: { attempts?: nu
 }
 
 /**
+ * Donation photos: donors upload a photo from their donation day plus a
+ * motivational caption. Photos stay 'pending' until an admin approves
+ * them; only 'approved' photos appear on the public homepage gallery.
+ * Every function returns null/false when Supabase or the table is
+ * unavailable, so the caller can fall back to the local file.
+ */
+function mapToAppPhoto(row: any): any {
+  return {
+    id: row.id,
+    donorId: row.donor_id,
+    donorName: row.donor_name || "",
+    photoData: row.photo_data,
+    caption: row.caption || "",
+    status: row.status || "pending",
+    createdAt: row.created_at || new Date().toISOString(),
+    reviewedAt: row.reviewed_at || null
+  };
+}
+
+function mapToSupabasePhoto(p: any): any {
+  return {
+    id: p.id,
+    donor_id: p.donorId,
+    donor_name: p.donorName || "",
+    photo_data: p.photoData,
+    caption: p.caption || "",
+    status: p.status || "pending",
+    created_at: p.createdAt || new Date().toISOString(),
+    reviewed_at: p.reviewedAt || null
+  };
+}
+
+export async function dbInsertDonationPhoto(photo: any): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from("donation_photos").insert([mapToSupabasePhoto(photo)]);
+    if (error) { console.error("Supabase Error inserting donation photo:", error.message); return false; }
+    return true;
+  } catch (error) { console.error("Exception inserting donation photo to Supabase:", error); return false; }
+}
+
+export async function dbGetAllDonationPhotos(): Promise<any[] | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.from("donation_photos").select("*").order("created_at", { ascending: false });
+    if (error) { console.error("Supabase Error getting donation photos:", error.message); return null; }
+    return (data || []).map(mapToAppPhoto);
+  } catch (error) { console.error("Exception getting donation photos from Supabase:", error); return null; }
+}
+
+export async function dbGetApprovedDonationPhotos(): Promise<any[] | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.from("donation_photos").select("*").eq("status", "approved").order("created_at", { ascending: false }).limit(20);
+    if (error) { console.error("Supabase Error getting approved donation photos:", error.message); return null; }
+    return (data || []).map(mapToAppPhoto);
+  } catch (error) { console.error("Exception getting approved donation photos from Supabase:", error); return null; }
+}
+
+export async function dbReviewDonationPhoto(id: string, status: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  try {
+    const { data, error } = await supabase.from("donation_photos").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id).select();
+    if (error) { console.error("Supabase Error reviewing donation photo:", error.message); return false; }
+    return !!(data && data.length > 0);
+  } catch (error) { console.error("Exception reviewing donation photo in Supabase:", error); return false; }
+}
+
+export async function dbDeleteDonationPhoto(id: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from("donation_photos").delete().eq("id", id);
+    if (error) { console.error("Supabase Error deleting donation photo:", error.message); return false; }
+    return true;
+  } catch (error) { console.error("Exception deleting donation photo in Supabase:", error); return false; }
+}
+
+/**
  * Seeds initial baseline users into Supabase on first startup if empty
  */
 export async function seedSupabaseIfNeeded(initialLocalUsers: any[]): Promise<void> {

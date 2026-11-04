@@ -20,6 +20,11 @@ import {
   dbInsertPasswordReset,
   dbGetLatestPasswordReset,
   dbUpdatePasswordReset,
+  dbInsertDonationPhoto,
+  dbGetAllDonationPhotos,
+  dbGetApprovedDonationPhotos,
+  dbReviewDonationPhoto,
+  dbDeleteDonationPhoto,
   getCompatibleDonorGroups,
   seedSupabaseIfNeeded
 } from "./supabaseService.js";
@@ -101,12 +106,24 @@ interface DBPasswordReset {
   createdAt: string;
 }
 
+interface DBDonationPhoto {
+  id: string;
+  donorId: string;
+  donorName: string;
+  photoData: string;
+  caption: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+  reviewedAt?: string | null;
+}
+
 interface DB {
   users: DBUser[];
   requests: DBRequest[];
   notifications?: DBNotification[];
   activities?: LiveActivity[];
   passwordResets?: DBPasswordReset[];
+  donationPhotos?: DBDonationPhoto[];
 }
 
 const DB_FILE = path.join(process.cwd(), "db.json");
@@ -144,7 +161,8 @@ function readDB(): DB {
       const initialDb = {
         ...DEFAULT_DB,
         notifications: [],
-        activities: []
+        activities: [],
+        donationPhotos: []
       };
       fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2));
       return initialDb as any;
@@ -158,6 +176,10 @@ function readDB(): DB {
     }
     if (!parsed.activities) {
       parsed.activities = [];
+      migrated = true;
+    }
+    if (!parsed.donationPhotos) {
+      parsed.donationPhotos = [];
       migrated = true;
     }
     if (migrated) {
@@ -1326,6 +1348,140 @@ async function startServer() {
       return res.json(db.notifications[index]);
     }
     res.status(404).json({ error: "Notification not found" });
+  });
+
+  // --- DONATION PHOTOS (approval flow) ---
+  // Donors upload a photo from their donation day plus a motivational
+  // caption. Photos stay 'pending' until an admin approves them; only
+  // 'approved' photos appear on the public homepage gallery.
+  const MAX_PHOTO_CHARS = 1500000; // ~1.1 MB of binary after base64
+  const MAX_PENDING_PER_DONOR = 3;
+
+  function publicPhoto(p: any) {
+    return {
+      id: p.id,
+      donorId: p.donorId,
+      donorName: p.donorName,
+      photoData: p.photoData,
+      caption: p.caption,
+      status: p.status,
+      createdAt: p.createdAt,
+      reviewedAt: p.reviewedAt || null
+    };
+  }
+
+  // Upload a donation photo (donor or admin). Goes to Supabase first,
+  // local db.json only as fallback — same pattern as notifications.
+  app.post("/api/donation-photos", authenticate, async (req: any, res) => {
+    const { photoData, caption } = req.body || {};
+    if (typeof photoData !== "string" || !/^data:image\/(jpeg|png|webp);base64,/.test(photoData)) {
+      return res.status(400).json({ error: "Please upload a valid photo (JPEG, PNG or WebP)." });
+    }
+    if (photoData.length > MAX_PHOTO_CHARS) {
+      return res.status(400).json({ error: "Photo is too large. Please upload a photo under 4 MB." });
+    }
+    const cleanCaption = typeof caption === "string" ? caption.trim().slice(0, 200) : "";
+    const db = readDB();
+    if (!db.donationPhotos) db.donationPhotos = [];
+    const pendingCount = db.donationPhotos.filter(p => p.donorId === req.user.id && p.status === "pending").length;
+    let supabasePending = 0;
+    if (isSupabaseActive()) {
+      const all = await dbGetAllDonationPhotos();
+      if (all !== null) supabasePending = all.filter(p => p.donorId === req.user.id && p.status === "pending").length;
+    }
+    if (Math.max(pendingCount, supabasePending) >= MAX_PENDING_PER_DONOR) {
+      return res.status(400).json({ error: "You already have 3 photos waiting for review. Please wait for approval first." });
+    }
+    const photo: DBDonationPhoto = {
+      id: "photo-" + Math.random().toString(36).slice(2, 10),
+      donorId: req.user.id,
+      donorName: req.user.name,
+      photoData,
+      caption: cleanCaption,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      reviewedAt: null
+    };
+    let savedInSupabase = false;
+    if (isSupabaseActive()) {
+      savedInSupabase = await dbInsertDonationPhoto(photo);
+    }
+    if (!savedInSupabase) {
+      db.donationPhotos.unshift(photo);
+      writeDB(db);
+    }
+    res.status(201).json(publicPhoto(photo));
+  });
+
+  // List donation photos: admins see all, donors see only their own.
+  app.get("/api/donation-photos", authenticate, async (req: any, res) => {
+    const db = readDB();
+    const localList = (db.donationPhotos || []).filter(p => req.user.role === "admin" || p.donorId === req.user.id);
+    let merged = [...localList];
+    if (isSupabaseActive()) {
+      const supabaseList = await dbGetAllDonationPhotos();
+      if (supabaseList !== null) {
+        const own = req.user.role === "admin" ? supabaseList : supabaseList.filter(p => p.donorId === req.user.id);
+        const seen = new Set(merged.map(p => p.id));
+        merged = [...merged, ...own.filter(p => !seen.has(p.id))];
+      }
+    }
+    merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    res.json(merged.map(publicPhoto));
+  });
+
+  // Public feed: only approved photos, for the homepage gallery.
+  app.get("/api/donation-photos/approved", async (req: any, res) => {
+    if (isSupabaseActive()) {
+      const approved = await dbGetApprovedDonationPhotos();
+      if (approved !== null) return res.json(approved.map(publicPhoto));
+    }
+    const db = readDB();
+    const localApproved = (db.donationPhotos || [])
+      .filter(p => p.status === "approved")
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 20);
+    res.json(localApproved.map(publicPhoto));
+  });
+
+  // Admin review: approve or reject a photo.
+  app.put("/api/donation-photos/:id/review", authenticate, adminOnly, async (req: any, res) => {
+    const { id } = req.params;
+    const { status } = req.body || {};
+    if (status !== "approved" && status !== "rejected") {
+      return res.status(400).json({ error: "Status must be approved or rejected." });
+    }
+    if (isSupabaseActive()) {
+      await dbReviewDonationPhoto(id, status);
+    }
+    const db = readDB();
+    if (!db.donationPhotos) db.donationPhotos = [];
+    const photo = db.donationPhotos.find(p => p.id === id);
+    if (photo) {
+      photo.status = status;
+      photo.reviewedAt = new Date().toISOString();
+      writeDB(db);
+      return res.json(publicPhoto(photo));
+    }
+    // Photo lived only in Supabase: report the review result anyway.
+    if (isSupabaseActive()) {
+      return res.json({ id, status });
+    }
+    res.status(404).json({ error: "Photo not found" });
+  });
+
+  // Admin delete: remove a photo entirely (e.g. an approved photo that
+  // should no longer be public, or an inappropriate upload).
+  app.delete("/api/donation-photos/:id", authenticate, adminOnly, async (req: any, res) => {
+    const { id } = req.params;
+    if (isSupabaseActive()) {
+      await dbDeleteDonationPhoto(id);
+    }
+    const db = readDB();
+    if (!db.donationPhotos) db.donationPhotos = [];
+    db.donationPhotos = db.donationPhotos.filter(p => p.id !== id);
+    writeDB(db);
+    res.json({ message: "Photo deleted successfully." });
   });
 
   // --- VITE DEV MIDDLEWARE AND STATIC PRODUCTION HOSTING ---

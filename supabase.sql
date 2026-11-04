@@ -175,3 +175,40 @@ drop policy if exists "Public delete password_resets" on public.password_resets;
 create policy "Public delete password_resets"
   on public.password_resets for delete
   using (true);
+
+-- Donation photos: donors upload a photo from their donation day plus a
+-- motivational caption. Photos stay 'pending' until an admin approves
+-- them; only 'approved' photos appear on the public homepage gallery.
+create table if not exists public.donation_photos (
+  id text primary key,
+  donor_id text not null,
+  donor_name text,
+  photo_data text not null,
+  caption text,
+  status text default 'pending',
+  created_at timestamptz default now(),
+  reviewed_at timestamptz
+);
+
+alter table public.donation_photos enable row level security;
+
+drop policy if exists "Public read donation_photos" on public.donation_photos;
+create policy "Public read donation_photos"
+  on public.donation_photos for select
+  using (true);
+
+drop policy if exists "Public insert donation_photos" on public.donation_photos;
+create policy "Public insert donation_photos"
+  on public.donation_photos for insert
+  with check (true);
+
+drop policy if exists "Public update donation_photos" on public.donation_photos;
+create policy "Public update donation_photos"
+  on public.donation_photos for update
+  using (true)
+  with check (true);
+
+drop policy if exists "Public delete donation_photos" on public.donation_photos;
+create policy "Public delete donation_photos"
+  on public.donation_photos for delete
+  using (true);

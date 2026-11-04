@@ -36,12 +36,13 @@ export default function AdminDashboard({
   onRefreshStats,
 }: AdminDashboardProps) {
   // Navigation / views
-  const [activeTab, setActiveTab] = useState<'overview' | 'donors' | 'requests' | 'activities'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'donors' | 'requests' | 'activities' | 'photos'>('overview');
 
   // Core database pools
   const [users, setUsers] = useState<User[]>([]);
   const [requests, setRequests] = useState<BloodRequest[]>([]);
   const [activities, setActivities] = useState<LiveActivity[]>([]);
+  const [photos, setPhotos] = useState<any[]>([]);
   
   // Loading indicators
   const [isLoading, setIsLoading] = useState(false);
@@ -102,10 +103,34 @@ export default function AdminDashboard({
 
       const actsData = await api.adminGetActivities();
       setActivities(actsData);
+
+      const photosData = await api.getDonationPhotos();
+      setPhotos(photosData);
     } catch (err) {
       console.error('Failed fetching university network directory', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleReviewPhoto = async (id: string, status: 'approved' | 'rejected') => {
+    try {
+      await api.reviewDonationPhoto(id, status);
+      setPhotos(photos.map(p => p.id === id ? { ...p, status } : p));
+      toastFeedback(status === 'approved' ? 'Photo approved — now live on the homepage gallery.' : 'Photo rejected.');
+    } catch {
+      alert('Could not update photo status');
+    }
+  };
+
+  const handleDeletePhoto = async (id: string) => {
+    if (!window.confirm('Delete this photo permanently?')) return;
+    try {
+      await api.deleteDonationPhoto(id);
+      setPhotos(photos.filter(p => p.id !== id));
+      toastFeedback('Photo deleted.');
+    } catch {
+      alert('Could not delete photo');
     }
   };
 
@@ -397,6 +422,16 @@ export default function AdminDashboard({
             }`}
           >
             ⚡ Live Activity
+          </button>
+          <button
+            onClick={() => setActiveTab('photos')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === 'photos' 
+                ? 'bg-[#FF1E1E] text-white shadow-md' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            📸 Photo Approvals ({photos.filter(p => p.status === 'pending').length})
           </button>
         </div>
       </div>
@@ -1012,6 +1047,78 @@ export default function AdminDashboard({
                         <Clock className="h-3 w-3 text-gray-600" />
                         {new Date(act.createdAt).toLocaleString()}
                       </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ==================================== */}
+          {/* 5. PHOTO APPROVALS TAB PANEL         */}
+          {/* ==================================== */}
+          {activeTab === 'photos' && (
+            <div className="rounded-2xl border border-white/8 bg-[#0B1220] p-6 shadow-xl text-left">
+              <div className="border-b border-white/5 pb-4 mb-4">
+                <h3 className="font-display text-lg font-extrabold text-white flex items-center gap-2">
+                  <span>📸 Donation Photo Approvals</span>
+                </h3>
+                <p className="text-xs text-gray-400">Photos donors uploaded from their donation day. Approve to publish them on the homepage gallery, reject to keep them private.</p>
+              </div>
+
+              {photos.length === 0 ? (
+                <div className="text-center py-16">
+                  <p className="mt-2 text-xs font-bold text-gray-500">No donation photos uploaded yet.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[...photos].sort((a, b) => {
+                    const order: Record<string, number> = { pending: 0, approved: 1, rejected: 2 };
+                    if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  }).map((photo) => (
+                    <div key={photo.id} className="overflow-hidden rounded-xl border border-white/8 bg-white/5">
+                      <img src={photo.photoData} alt={photo.caption || 'Donation photo'} className="h-48 w-full object-cover" />
+                      <div className="p-4 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            photo.status === 'approved'
+                              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                              : photo.status === 'rejected'
+                              ? 'bg-[#FF1E1E]/15 text-[#FF1E1E] border-[#FF1E1E]/30'
+                              : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                          }`}>
+                            {photo.status === 'approved' ? 'Live on homepage' : photo.status === 'rejected' ? 'Rejected' : 'Pending review'}
+                          </span>
+                          <span className="text-[10px] text-gray-500 font-mono">{new Date(photo.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-xs font-bold text-white">{photo.donorName}</p>
+                        {photo.caption && <p className="text-xs text-gray-300 leading-relaxed">{photo.caption}</p>}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {photo.status !== 'approved' && (
+                            <button
+                              onClick={() => handleReviewPhoto(photo.id, 'approved')}
+                              className="rounded-lg bg-emerald-500 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-emerald-600 transition-colors cursor-pointer"
+                            >
+                              Approve ✓
+                            </button>
+                          )}
+                          {photo.status !== 'rejected' && (
+                            <button
+                              onClick={() => handleReviewPhoto(photo.id, 'rejected')}
+                              className="rounded-lg bg-white/10 px-3 py-1.5 text-[11px] font-bold text-gray-300 hover:bg-white/20 transition-colors cursor-pointer"
+                            >
+                              Reject
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeletePhoto(photo.id)}
+                            className="rounded-lg bg-[#FF1E1E]/15 px-3 py-1.5 text-[11px] font-bold text-[#FF1E1E] hover:bg-[#FF1E1E]/25 transition-colors cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>

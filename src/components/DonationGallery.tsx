@@ -2,30 +2,52 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { DONATION_PHOTOS_A } from '../donationPhotosA';
 import { DONATION_PHOTOS_B } from '../donationPhotosB';
+import { api } from '../lib/api';
 
-const PHOTOS = [...DONATION_PHOTOS_A, ...DONATION_PHOTOS_B];
+const CURATED_PHOTOS = [...DONATION_PHOTOS_A, ...DONATION_PHOTOS_B];
 
 interface DonationGalleryProps {
   onOpenRegister: () => void;
 }
 
 export default function DonationGallery({ onOpenRegister }: DonationGalleryProps) {
+  const [photos, setPhotos] = useState<any[]>(CURATED_PHOTOS);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  // Approved donor uploads go first in the slideshow, so the newest
+  // real campus donation photos are what visitors see first.
+  useEffect(() => {
+    api.getApprovedDonationPhotos()
+      .then((approved) => {
+        if (!approved || approved.length === 0) return;
+        const userPhotos = approved.slice(0, 12).map((p: any) => ({
+          src: p.photoData,
+          alt: p.caption || `Donation photo by ${p.donorName}`,
+          caption: p.caption || 'Rokto dilam, jibon bachlo',
+          sub: `${p.donorName} • Campus Donor`,
+        }));
+        setPhotos([...userPhotos, ...CURATED_PHOTOS]);
+        setIndex(0);
+      })
+      .catch(() => {
+        // Keep the curated gallery when the approved feed is unavailable.
+      });
+  }, []);
 
   useEffect(() => {
     if (paused) return;
     const timer = setInterval(() => {
-      setIndex((i) => (i + 1) % PHOTOS.length);
+      setIndex((i) => (i + 1) % photos.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, [paused]);
+  }, [paused, photos.length]);
 
   const go = (dir: number) => {
-    setIndex((i) => (i + dir + PHOTOS.length) % PHOTOS.length);
+    setIndex((i) => (i + dir + photos.length) % photos.length);
   };
 
-  const current = PHOTOS[index];
+  const current = photos[index % photos.length] || photos[0];
 
   return (
     <div className="rounded-3xl border border-white/8 bg-[#0B1220] p-6 shadow-[0_4px_30px_rgba(0,0,0,0.25)]">
@@ -49,7 +71,7 @@ export default function DonationGallery({ onOpenRegister }: DonationGalleryProps
         onMouseLeave={() => setPaused(false)}
       >
         <div className="relative h-64 sm:h-80 md:h-96 w-full">
-          {PHOTOS.map((photo, i) => (
+          {photos.map((photo, i) => (
             <img
               key={i}
               src={photo.src}
@@ -63,7 +85,7 @@ export default function DonationGallery({ onOpenRegister }: DonationGalleryProps
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-5 pt-24 text-left">
             <p className="text-lg sm:text-2xl font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">{current.caption}</p>
             <p className="mt-1 text-sm font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
-              {index + 1} / {PHOTOS.length} • Trust University, Barishal Campus Donor Network
+              {index + 1} / {photos.length} • {current.sub || 'Trust University, Barishal Campus Donor Network'}
             </p>
           </div>
         </div>
@@ -86,7 +108,7 @@ export default function DonationGallery({ onOpenRegister }: DonationGalleryProps
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          {PHOTOS.map((_, i) => (
+          {photos.map((_, i) => (
             <button
               key={i}
               onClick={() => setIndex(i)}

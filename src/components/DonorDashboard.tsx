@@ -20,7 +20,10 @@ import {
   Flame, 
   Clock, 
   AlertTriangle,
-  X
+  X,
+  ImagePlus,
+  Upload,
+  Camera
 } from 'lucide-react';
 
 interface DonorDashboardProps {
@@ -80,6 +83,95 @@ export default function DonorDashboard({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedNotif, setSelectedNotif] = useState<Notification | null>(null);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+
+  // Donation photos states (approval flow: upload -> admin review -> homepage gallery)
+  const [myPhotos, setMyPhotos] = useState<any[]>([]);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [photoCaption, setPhotoCaption] = useState('');
+  const [photoMsg, setPhotoMsg] = useState('');
+  const [photoUploading, setPhotoUploading] = useState(false);
+
+  const fetchMyPhotos = async () => {
+    try {
+      const data = await api.getDonationPhotos();
+      setMyPhotos(data);
+    } catch (err) {
+      console.error('Failed fetching my donation photos', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyPhotos();
+  }, []);
+
+  // Shrink the photo in the browser before upload so one photo stays
+  // small (max 1000px, JPEG) and never eats the free database budget.
+  const optimizePhoto = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const maxDim = 1000;
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { URL.revokeObjectURL(url); reject(new Error('Could not process photo')); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL('image/jpeg', 0.78));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read photo')); };
+      img.src = url;
+    });
+  };
+
+  const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    setPhotoMsg('');
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setPhotoMsg('Please choose an image file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoMsg('Photo is too large. Please choose a photo under 5 MB.');
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handlePhotoUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!photoFile) {
+      setPhotoMsg('Please choose a photo first.');
+      return;
+    }
+    setPhotoUploading(true);
+    setPhotoMsg('');
+    try {
+      const dataUrl = await optimizePhoto(photoFile);
+      await api.uploadDonationPhoto(dataUrl, photoCaption);
+      setPhotoMsg('Photo uploaded! It will appear on the homepage after admin approval.');
+      setPhotoFile(null);
+      setPhotoPreview('');
+      setPhotoCaption('');
+      fetchMyPhotos();
+    } catch (err: any) {
+      setPhotoMsg(err.message || 'Failed to upload photo. Please try again.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const photoStatusBadge = (status: string) => {
+    if (status === 'approved') return <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">Live on homepage</span>;
+    if (status === 'rejected') return <span className="bg-[#FF1E1E]/15 text-[#FF1E1E] border border-[#FF1E1E]/30 text-[10px] font-bold px-2 py-0.5 rounded-full">Not approved</span>;
+    return <span className="bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">Waiting for approval</span>;
+  };
 
   const bloodGroups: BloodGroup[] = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
@@ -392,6 +484,77 @@ export default function DonorDashboard({
             </div>
           </div>
         )}
+
+        {/* ============================================================== */}
+        {/* 📸 MY DONATION PHOTOS (admin approval -> homepage gallery)    */}
+        {/* ============================================================== */}
+        <div className="rounded-2xl border border-white/8 bg-[#0B1220] p-6 shadow-xl text-left">
+          <div className="border-b border-white/5 pb-4 mb-4 text-left">
+            <h3 className="font-display text-lg font-extrabold text-white flex items-center gap-2">
+              <Camera className="h-5 w-5 text-[#FF1E1E]" />
+              <span>My Donation Photos</span>
+            </h3>
+            <p className="text-xs text-gray-400 font-medium">Share a photo from your donation day. After admin approval it appears on the homepage gallery for everyone to see.</p>
+          </div>
+
+          <form onSubmit={handlePhotoUpload} className="space-y-3">
+            <label className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/5 px-4 py-6 cursor-pointer hover:border-[#FF1E1E]/40 transition-colors text-center">
+              <ImagePlus className="h-7 w-7 text-gray-400" />
+              <span className="text-xs font-bold text-white">{photoFile ? photoFile.name : 'Choose your donation photo'}</span>
+              <span className="text-[10.5px] text-gray-400">JPG or PNG, under 5 MB. Only your own photo — no patient photos.</span>
+              <input type="file" accept="image/*" className="hidden" onChange={handlePhotoFileChange} />
+            </label>
+
+            {photoPreview && (
+              <img src={photoPreview} alt="Donation photo preview" className="h-48 w-full rounded-xl object-cover border border-white/10" />
+            )}
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                Motivational message (optional)
+              </label>
+              <textarea
+                value={photoCaption}
+                onChange={(e) => setPhotoCaption(e.target.value)}
+                maxLength={200}
+                rows={2}
+                placeholder="e.g. Rokto dilam, ekta jibon bachlo — tumi o egiye asho!"
+                className="w-full rounded-xl border border-white/8 bg-[#111827] px-3 py-2 text-xs font-medium text-white outline-none focus:border-[#FF1E1E] resize-none"
+              />
+              <p className="mt-1 text-right text-[10px] text-gray-500">{photoCaption.length}/200</p>
+            </div>
+
+            {photoMsg && (
+              <p className={`text-xs font-bold ${photoMsg.includes('uploaded') ? 'text-emerald-400' : 'text-[#FF1E1E]'}`}>{photoMsg}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={photoUploading || !photoFile}
+              className="flex items-center justify-center gap-2 rounded-xl bg-[#FF1E1E] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#ff3c3c] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Upload className="h-4 w-4" />
+              {photoUploading ? 'Uploading...' : 'Upload Photo for Review'}
+            </button>
+          </form>
+
+          {myPhotos.length > 0 && (
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {myPhotos.map((photo) => (
+                <div key={photo.id} className="overflow-hidden rounded-xl border border-white/8 bg-white/5">
+                  <img src={photo.photoData} alt={photo.caption || 'Donation photo'} className="h-40 w-full object-cover" />
+                  <div className="p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      {photoStatusBadge(photo.status)}
+                      <span className="text-[10px] text-gray-500 font-mono">{new Date(photo.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {photo.caption && <p className="mt-2 text-xs font-medium text-white leading-relaxed">{photo.caption}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Profile Settings Update Form */}
         <div className="rounded-2xl border border-white/8 bg-[#0B1220] p-6 shadow-xl md:p-8 text-left">

@@ -185,5 +185,34 @@ export const api = {
     return fetchAPI(`/api/notifications/${id}/read`, {
       method: 'PUT',
     });
+  },
+
+  // Donation Photos (approval flow)
+  async uploadDonationPhoto(photoData: string, caption: string): Promise<any> {
+    return fetchAPI('/api/donation-photos', {
+      method: 'POST',
+      body: JSON.stringify({ photoData, caption }),
+    });
+  },
+
+  async getDonationPhotos(): Promise<any[]> {
+    return fetchAPI('/api/donation-photos');
+  },
+
+  async getApprovedDonationPhotos(): Promise<any[]> {
+    return fetchAPI('/api/donation-photos/approved');
+  },
+
+  async reviewDonationPhoto(id: string, status: 'approved' | 'rejected'): Promise<any> {
+    return fetchAPI(`/api/donation-photos/${id}/review`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  async deleteDonationPhoto(id: string): Promise<any> {
+    return fetchAPI(`/api/donation-photos/${id}`, {
+      method: 'DELETE',
+    });
   }
 };
