@@ -126,6 +126,52 @@ interface DB {
   donationPhotos?: DBDonationPhoto[];
 }
 
+// --- 3-MONTH DONATION ELIGIBILITY ---
+// A donor may give blood again 3 calendar months after their last
+// donation (e.g. last donated 1 Sept -> eligible again 1 Dec).
+// A donor who has never donated (donationCount 0 or no last donation
+// date) is eligible right away. The same rule is mirrored in
+// src/lib/eligibility.ts for the frontend; keep the two in sync.
+function addMonthsClamped(y: number, m: number, d: number, months: number): Date {
+  const totalMonths = y * 12 + m + months;
+  const newY = Math.floor(totalMonths / 12);
+  const newM = totalMonths % 12;
+  const lastDay = new Date(newY, newM + 1, 0).getDate();
+  return new Date(newY, newM, Math.min(d, lastDay));
+}
+
+export function getNextEligibleDate(lastDonationDate: string): string | null {
+  if (!lastDonationDate) return null;
+  const parts = String(lastDonationDate).split("-");
+  if (parts.length < 3) return null;
+  const y = Number(parts[0]);
+  const m = Number(parts[1]) - 1;
+  const d = Number(parts[2]);
+  if (!y || m < 0 || m > 11 || !d) return null;
+  const next = addMonthsClamped(y, m, d, 3);
+  const mm = String(next.getMonth() + 1).padStart(2, "0");
+  const dd = String(next.getDate()).padStart(2, "0");
+  return `${next.getFullYear()}-${mm}-${dd}`;
+}
+
+export function isDonorEligible(user: any, now: Date = new Date()): boolean {
+  if (!user) return false;
+  if (!user.lastDonationDate) return true;
+  if (!user.donationCount) return true; // never donated: no wait
+  const next = getNextEligibleDate(user.lastDonationDate);
+  if (!next) return true;
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return todayStr >= next;
+}
+
+function withEligibility(u: any): any {
+  return {
+    ...u,
+    isEligible: isDonorEligible(u),
+    nextEligibleDate: getNextEligibleDate(u.lastDonationDate || "")
+  };
+}
+
 const DB_FILE = path.join(process.cwd(), "db.json");
 
 // Default high quality seeding data for university context
@@ -765,19 +811,23 @@ async function startServer() {
     }
 
     if (availableOnly === "true") {
-      filteredDonors = filteredDonors.filter(u => u.isAvailable === true);
+      // "Available" means switched on AND past the 3-month wait after
+      // the last donation (a first-time donor has no wait).
+      filteredDonors = filteredDonors.filter(u => u.isAvailable === true && isDonorEligible(u));
     }
 
     // Process public info vs private info: donor phone numbers and
     // emails are private. Only a logged-in visitor may see them, so a
     // public search never leaks student contact details.
+    // Every donor also carries isEligible + nextEligibleDate so the
+    // frontend can show "Available from ..." instead of READY.
     const publicDonors = filteredDonors.map(u => {
       const { passwordHash, ...safeUser } = u;
       if (!isLoggedIn) {
         safeUser.phone = "";
         safeUser.email = "";
       }
-      return safeUser;
+      return withEligibility(safeUser);
     });
 
     res.json(publicDonors);
@@ -809,7 +859,7 @@ async function startServer() {
 
     const stats = {
       totalDonors: donors.length,
-      availableDonors: donors.filter(u => u.isAvailable).length,
+      availableDonors: donors.filter(u => u.isAvailable && isDonorEligible(u)).length,
       emergencyRequests: requests.filter(r => r.status === "pending").length,
       livesSaved: requests.filter(r => r.status === "fulfilled").length * 2 + 12 // Seed baseline for nice layout rendering!
     };
@@ -921,7 +971,9 @@ async function startServer() {
       }
     }
     const compatibleGroups = getCompatibleDonorGroups(newRequest.bloodGroup);
-    const matchingDonors = donorPool.filter(u => (u.role === "donor" || u.role === "admin") && compatibleGroups.includes(u.bloodGroup) && !u.isSuspended);
+    // Only donors past the 3-month wait after their last donation get
+    // the alert (first-time donors have no wait and are included).
+    const matchingDonors = donorPool.filter(u => (u.role === "donor" || u.role === "admin") && compatibleGroups.includes(u.bloodGroup) && !u.isSuspended && isDonorEligible(u));
 
     const newNotifications = matchingDonors.map(donor => ({
       id: "notif-" + Math.random().toString(36).substring(2, 11),

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, BloodRequest, BloodGroup, Notification } from '../types';
 import { api } from '../lib/api';
+import { isDonorEligible, getNextEligibleDate, formatEligibleDate } from '../lib/eligibility';
 import { 
   ShieldCheck, 
   Calendar, 
@@ -175,6 +176,11 @@ export default function DonorDashboard({
 
   const bloodGroups: BloodGroup[] = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
+  // 3-month eligibility for the logged-in donor (server sends the
+  // fields; recompute locally as a fallback).
+  const myEligible = currentUser.isEligible ?? isDonorEligible(currentUser);
+  const myNextDate = currentUser.nextEligibleDate ?? getNextEligibleDate(currentUser.lastDonationDate || '');
+
   const fetchNotifications = async () => {
     setIsLoadingNotifications(true);
     try {
@@ -297,6 +303,11 @@ export default function DonorDashboard({
                 )}
               </button>
             </div>
+            {!myEligible && myNextDate && (
+              <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-[11px] font-bold text-amber-300 leading-relaxed">
+                🗓 You can donate again from {formatEligibleDate(myNextDate)} — 3 months after your last donation on {formatEligibleDate(currentUser.lastDonationDate)}. Until then you will not appear as available.
+              </div>
+            )}
           </div>
         </div>
 

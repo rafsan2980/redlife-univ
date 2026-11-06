@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { api } from '../lib/api';
+import { isDonorEligible, getNextEligibleDate, formatEligibleDate } from '../lib/eligibility';
 import { User, BloodGroup } from '../types';
 
 interface InfoSectionProps {
@@ -81,17 +82,15 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
     loadData();
   };
 
+  // 3-month rule: a donor is 'recently_donated' (not callable yet) until
+  // 3 calendar months have passed since the last donation. First-time
+  // donors (no donation yet) count as available.
   const getDonorStatus = (donor: User) => {
     if (donor.isAvailable === false) {
       return 'busy';
     }
-    if (donor.lastDonationDate) {
-      const lastDate = new Date(donor.lastDonationDate);
-      const ninetyDaysAgo = new Date();
-      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-      if (lastDate > ninetyDaysAgo) {
-        return 'recently_donated';
-      }
+    if (!isDonorEligible(donor)) {
+      return 'recently_donated';
     }
     return 'available';
   };
@@ -102,10 +101,10 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Live query-based real statistics
+  // Live query-based real statistics (only past-the-3-month-wait donors count as ready)
   const totalRegisteredCount = donors.length;
-  const availableCount = donors.filter(d => d.isAvailable).length;
-  const emergencyReadyCount = donors.filter(d => d.isAvailable && d.isVerified).length;
+  const availableCount = donors.filter(d => getDonorStatus(d) === 'available').length;
+  const emergencyReadyCount = donors.filter(d => getDonorStatus(d) === 'available' && d.isVerified).length;
   const uniqueHallsCount = new Set(donors.map(d => d.hall).filter(Boolean)).size;
 
   // Real-time calculated counts for each blood group across university
@@ -432,6 +431,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
           >
             {filteredDonors.map(donor => {
               const dStatus = getDonorStatus(donor);
+              const nextDate = donor.nextEligibleDate ?? getNextEligibleDate(donor.lastDonationDate || '');
 
               return (
                 <motion.div
@@ -446,7 +446,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
                       dStatus === 'busy' ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'bg-red-500'
                     }`} />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 select-none">
-                      {dStatus === 'available' ? 'Ready' : 'Resting'}
+                      {dStatus === 'available' ? 'Ready' : dStatus === 'recently_donated' ? `From ${formatEligibleDate(nextDate)}` : 'Resting'}
                     </span>
                   </div>
 
@@ -497,6 +497,13 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
                     </div>
                   </div>
 
+                  {/* 3-month wait: show when they can donate next */}
+                  {dStatus === 'recently_donated' && nextDate && (
+                    <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs font-bold text-amber-300">
+                      🗓 Available for donation from {formatEligibleDate(nextDate)}
+                    </div>
+                  )}
+
                   {/* Actions - phone only for logged-in visitors */}
                   {donor.phone ? (
                   <div className="mt-5 pt-3 border-t border-white/5 space-y-2.5">
@@ -520,6 +527,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
                       </button>
                     </div>
 
+                    {dStatus !== 'recently_donated' && (
                     <a
                       href={`tel:${donor.phone}`}
                       className="w-full flex h-9.5 items-center justify-center gap-2 rounded-xl bg-[#FF1E1E] hover:bg-[#ff3c3c] text-white font-bold text-xs shadow-md transition-all cursor-pointer text-center select-none"
@@ -527,6 +535,7 @@ export default function InfoSection({ currentUser, onOpenAuth }: InfoSectionProp
                       <Phone className="h-3.5 w-3.5 shrink-0" />
                       <span>Call Donor</span>
                     </a>
+                    )}
                   </div>
                   ) : (
                   <div className="mt-5 pt-3 border-t border-white/5">

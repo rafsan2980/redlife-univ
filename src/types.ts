@@ -15,6 +15,10 @@ export interface User {
   donationCount?: number; // Times donated blood
   lastDonationDate: string; // YYYY-MM-DD format (empty if never)
   isAvailable: boolean;
+  // 3-month eligibility, computed by the server (frontend can recompute
+  // from lastDonationDate + donationCount as a fallback).
+  isEligible?: boolean;
+  nextEligibleDate?: string | null;
   isVerified: boolean; // Verified by university admin
   isSuspended?: boolean; // Admin can suspend accounts
   role: 'donor' | 'admin';

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Droplet, Phone, Mail, MapPin, Calendar, CheckCircle, ShieldAlert, GraduationCap, Award } from 'lucide-react';
 import { User, BloodGroup } from '../types';
+import { isDonorEligible, getNextEligibleDate, formatEligibleDate } from '../lib/eligibility';
 
 interface DonorSearchProps {
   donors: User[];
@@ -167,7 +168,11 @@ export default function DonorSearch({
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {donors.map((donor) => {
-            const canDonate = donor.isAvailable;
+            // Eligible = past the 3-month wait after the last donation
+            // (server sends isEligible; recompute locally as fallback).
+            const eligible = donor.isEligible ?? isDonorEligible(donor);
+            const nextDate = donor.nextEligibleDate ?? getNextEligibleDate(donor.lastDonationDate || '');
+            const canDonate = donor.isAvailable && eligible;
             
             return (
               <div
@@ -184,7 +189,7 @@ export default function DonorSearch({
                     }`}
                   />
                   <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 select-none">
-                    {canDonate ? 'Ready' : 'Resting'}
+                    {canDonate ? 'Ready' : !eligible ? `From ${formatEligibleDate(nextDate)}` : 'Resting'}
                   </span>
                 </div>
 
@@ -241,6 +246,13 @@ export default function DonorSearch({
                   </div>
                 </div>
 
+                {/* 3-month wait: not eligible yet — show when they can donate next */}
+                {!eligible && nextDate && (
+                  <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs font-bold text-amber-300">
+                    🗓 Available for donation from {formatEligibleDate(nextDate)}
+                  </div>
+                )}
+
                 {/* Direct Donor Contact Area - phone only for logged-in visitors */}
                 {donor.phone ? (
                 <div className="mt-5 border-t border-white/5 pt-4 flex flex-col gap-3">
@@ -258,7 +270,8 @@ export default function DonorSearch({
                     </div>
                   )}
 
-                  {/* Red Action Buttons */}
+                  {/* Red Action Buttons — hidden while the 3-month wait runs */}
+                  {eligible && (
                   <div className="space-y-2 mt-1">
                     <a
                       href={`tel:${donor.phone}`}
@@ -268,6 +281,7 @@ export default function DonorSearch({
                       <span>Call Donor Now</span>
                     </a>
                   </div>
+                  )}
                 </div>
                 ) : (
                 <div className="mt-5 border-t border-white/5 pt-4">
